@@ -11,15 +11,16 @@ export const calculateDerivedColumns = {
   "Fees": (txn) => {
     const units = Number(txn["Number of Units"] || txn.units || 0);
     const price = Number(txn["Price per Share"] || txn.price || 0);
-    const type = txn.Type || txn.type || "";
+    const type = (txn.Type || txn.type || "").toLowerCase();
     let fees = 0;
 
-    if (type === "Buy" || type === "Sell") {
-      let commission = price < 20 ? units * 0.03 : units * price * 0.0015;
+    if (type === "buy" || type === "sell") {
+      const commission = price < 20 ? units * 0.03 : units * price * 0.0015;
       const salesTax = commission * 0.15;
       const cdcCharges = units * 0.005;
       fees = commission + salesTax + cdcCharges;
-    } else if (type === "Dividend") {
+    } else if (type === "dividend") {
+      // 15% withholding tax
       fees = units * price * 0.15;
     }
 
@@ -27,13 +28,23 @@ export const calculateDerivedColumns = {
   },
 
   "Net Value": (txn) => {
-    const totalValue =
-      Number(txn["Number of Units"] || txn.units || 0) *
-      Number(txn["Price per Share"] || txn.price || 0);
+    const units = Number(txn["Number of Units"] || txn.units || 0);
+    const price = Number(txn["Price per Share"] || txn.price || 0);
+    const type = (txn.Type || txn.type || "").toLowerCase();
+    const totalValue = units * price;
     const fees = calculateDerivedColumns["Fees"](txn);
-    return totalValue + fees; // deduct fees
+
+    if (type === "buy") {
+      return totalValue + fees; // cost basis increases
+    } else if (type === "sell") {
+      return totalValue - fees; // proceeds reduced
+    } else if (type === "dividend") {
+      return totalValue - fees; // payout reduced by withholding
+    }
+    return totalValue;
   },
 };
+
 
 // 🔹 Add cumulative units + cost processor
 export function withCumulativeData(transactions) {

@@ -1,65 +1,44 @@
-/* === Summary Page === */
-.summary-page {
-  width: 100%;             /* take full width for scrolling */
-  max-width: 100%;
-  margin: 0;
-  background-color: inherit; /* respect dark/light theme */
-}
-
-/* Header */
-.summary-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin: 2rem 0 1rem 0;
-}
-
 .summary-title {
-  font-size: 1.8rem;
+  font-size: 2.8rem;
   font-weight: bold;
   margin: 0;
-}
+  text-align: center;
+  margin-top: 100px; /* ✅ moves it slightly down */
+  margin-bottom: 100px; /* ✅ moves it slightly down */
 
-/* Table container */
-.summary-table-container {
-  width: max-content;       /* allow table to expand horizontally */
-  margin: 2rem 0;           /* no auto centering, left-aligned */
-  border-radius: 10px;
-  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
-  overflow-x: auto;         /* horizontal scroll if table too wide */
-  padding: 1rem;
-  border: black;
-  border: 10px solid #000000;  /* 2px solid black */
 }
-
-/* Light mode */
-body.light .summary-table-container {
-  background-color: #ffffff; /* solid white */
-}
-
-/* Dark mode */
-body.dark .summary-table-container {
-  background-color: #1e1e1e; /* solid dark */
-}
-
-/* Refresh button */
 .refresh-button {
-  background: none;
+  position: absolute;
+  top: 170px;
+  right: 20px;
+
+  /* keep your existing styles */
+  background: transparent;
   border: none;
   cursor: pointer;
-  padding: 0.25rem;
+  padding: 0.5rem;
+  transition: all 0.25s ease-in-out;
+
+  /* ✅ center the svg */
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.2s ease;
+}
+
+.refresh-button:hover:not(:disabled) {
+  transform: scale(1.1);
+}
+
+.refresh-button:active:not(:disabled) {
+  transform: scale(0.95);
 }
 
 .refresh-button:disabled {
   cursor: not-allowed;
-  opacity: 0.6;
+  opacity: 0.5;
+  box-shadow: none;
 }
 
-/* Light mode button */
 body.light .refresh-button svg {
   color: #008f5a;
 }
@@ -69,7 +48,6 @@ body.light .refresh-button:hover:not(:disabled) svg {
   transform: scale(1.15);
 }
 
-/* Dark mode button */
 body.dark .refresh-button svg {
   color: #00ff99;
 }
@@ -79,7 +57,6 @@ body.dark .refresh-button:hover:not(:disabled) svg {
   transform: scale(1.15);
 }
 
-/* Spin animation */
 .spin {
   animation: spin 1s linear infinite;
   border-radius: 50%;
@@ -93,4 +70,9 @@ body.dark .refresh-button:hover:not(:disabled) svg {
   to {
     transform: rotate(360deg);
   }
-}
+} 
+
+
+
+
+

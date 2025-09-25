@@ -23,5 +23,5 @@ export const SUMMARY_HEADERS = [
   "Portfolio %",
   "Realized Gain/Loss",
   "Dividend Income",
-  // "JSON"
+  "JSON"
 ];

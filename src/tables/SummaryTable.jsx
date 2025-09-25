@@ -203,6 +203,8 @@ import React, { useState, useMemo } from "react";
 import { SUMMARY_HEADERS } from "../config/summary_config.js";
 import { renderLastPrice, calculateYieldOnCost } from "../utils/SummaryUtils.jsx";
 import "../styles/SummaryTable.css";
+import "../styles/Summary.css";
+
 
 function SummaryTable({ summaries }) {
   const [filters, setFilters] = useState({});

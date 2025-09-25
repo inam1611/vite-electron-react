@@ -1,17 +1,33 @@
-/* === Summary Table === */
-.summary-table {
-  width: max-content;         /* table controls horizontal scroll */
-  min-width: 100%;            /* ensure small tables fill container */
-  border-collapse: collapse;
-  table-layout: auto;
+/* === Container === */
+.summary-table-container {
+  width: 100%;
+  max-width: 100%;
+  margin: 2rem auto;
+  padding: 1rem;
+  border-radius: 15px;
+  box-shadow: 0px 4px 15px rgba(0,0,0,0.25),
+              0px 0px 8px rgba(0,0,0,0.1);
+  overflow-x: auto; /* scroll only if absolutely necessary */
+  transition: background-color 0.3s ease;
 }
 
+/* === Table layout === */
+.summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: auto; /* dynamic column widths */
+}
+
+/* === Header and cells === */
 .summary-table th,
 .summary-table td {
   border: 1px solid #ccc;
-  padding: 0.6rem 0.8rem;
+  padding: clamp(0.25rem, 0.5vw, 0.6rem) clamp(0.5rem, 1vw, 0.8rem);
   text-align: center;
-  white-space: nowrap;        /* prevent wrapping */
+  font-size: clamp(0.7rem, 0.8vw, 0.95rem);
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.2;
 }
 
 /* Header styling */
@@ -42,10 +58,16 @@ body.dark .summary-table th {
   color: #00ff99;
   border-color: #00ff99;
 }
-
 body.dark .summary-table td {
-  color: #ffffff;
+  color: #fff;
   border-color: #00ff99;
+}
+body.dark .type-buy,
+body.dark .type-dividend {
+  color: #00ff99;
+}
+body.dark .type-sell {
+  color: #ff4d4d;
 }
 
 /* Light mode */
@@ -54,17 +76,28 @@ body.light .summary-table th {
   color: #006644;
   border-color: #008f5a;
 }
-
 body.light .summary-table td {
   color: #006644;
   border-color: #008f5a;
 }
+body.light .type-buy,
+body.light .type-dividend {
+  color: #008f5a;
+}
+body.light .type-sell {
+  color: #ff4d4d;
+}
 
 /* Responsive text */
+@media (max-width: 1200px) {
+  .summary-table th, .summary-table td {
+    font-size: 0.85rem;
+    padding: 0.25rem 0.5rem;
+  }
+}
 @media (max-width: 768px) {
-  .summary-table th,
-  .summary-table td {
-    padding: 0.4rem 0.6rem;
-    font-size: 0.9rem;
+  .summary-table th, .summary-table td {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.4rem;
   }
 }

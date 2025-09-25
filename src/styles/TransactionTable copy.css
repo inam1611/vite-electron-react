@@ -1,39 +1,37 @@
-/* === Container === */
+/* Container */
 .transaction-table-container {
-  width: 100%;
-  max-width: 100%;
-  margin: 2rem auto;
-  padding: 1rem;
+  min-width: 1600px;   /* wider form */
+  width: 90%;         /* responsive */
+  margin: 2rem auto;  /* top margin smaller to allow more content above */
+  padding: 2rem;
   border-radius: 15px;
-  box-shadow: 0px 4px 15px rgba(0,0,0,0.25),
-              0px 0px 8px rgba(0,0,0,0.1);
-  overflow-x: auto;
+  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.25), 
+            0px 0px 8px rgba(0, 0, 0, 0.1);
   transition: background-color 0.3s ease;
 }
 
-/* === Table layout === */
+
+/* Table layout */
 .transaction-table {
   width: 100%;
   border-collapse: collapse;
-  table-layout: auto;
+  table-layout: auto; /* dynamic column widths */
 }
 
 /* Header and cells */
 .transaction-table th,
 .transaction-table td {
   border: 1px solid #ccc;
-  padding: clamp(0.25rem, 0.5vw, 0.6rem) clamp(0.5rem, 1vw, 0.8rem);
+  padding: 0.6rem 0.8rem;
   text-align: center;
-  font-size: clamp(0.7rem, 0.8vw, 0.95rem);
-  white-space: normal;
-  word-break: break-word;
-  line-height: 1.2;
+  white-space: nowrap; /* prevent breaking words */
 }
 
 /* Header styling */
 .transaction-table th {
   font-weight: bold;
   background-color: #f2f2f2;
+  position: relative; /* for dropdown positioning */
 }
 
 /* Hover effect */
@@ -41,7 +39,7 @@
   background-color: rgba(0, 170, 119, 0.1);
 }
 
-/* Transaction type colors */
+/* Type column colors */
 .type-buy,
 .type-dividend {
   color: #008f5a !important;
@@ -54,39 +52,45 @@
 }
 
 /* Dark mode */
+body.dark .type-buy,
+body.dark .type-dividend {
+  color: #00ff99 !important;
+}
+
+body.dark .type-sell {
+  color: #ff4d4d !important;
+}
+
 body.dark .transaction-table th {
   background-color: #111;
   color: #f0f3f2ff;
   border-color: #00ff99;
 }
+
 body.dark .transaction-table td {
-  color: #fff;
+  color: #ffffff;
   border-color: #00ff99;
-}
-body.dark .type-buy,
-body.dark .type-dividend {
-  color: #00ff99 !important;
-}
-body.dark .type-sell {
-  color: #ff4d4d !important;
 }
 
 /* Light mode */
+body.light .type-buy,
+body.light .type-dividend {
+  color: #008f5a !important;
+}
+
+body.light .type-sell {
+  color: #ff4d4d !important;
+}
+
 body.light .transaction-table th {
   background-color: #e8fdf4;
   color: #006644;
   border-color: #008f5a;
 }
+
 body.light .transaction-table td {
   color: #006644;
   border-color: #008f5a;
-}
-body.light .type-buy,
-body.light .type-dividend {
-  color: #008f5a !important;
-}
-body.light .type-sell {
-  color: #ff4d4d !important;
 }
 
 /* Delete button */
@@ -97,24 +101,20 @@ body.light .type-sell {
   padding: 0.4rem 0.6rem;
   border-radius: 4px;
   cursor: pointer;
-  font-size: clamp(0.65rem, 0.8vw, 0.85rem);
+  font-size: 0.85rem;
   transition: background 0.3s ease;
 }
+
 .delete-btn:hover {
   background-color: #fc4040ff;
 }
 
-/* Responsive text */
-@media (max-width: 1200px) {
-  .transaction-table th, .transaction-table td {
-    font-size: 0.85rem;
-    padding: 0.25rem 0.5rem;
-  }
-}
+/* Responsive text for smaller screens */
 @media (max-width: 768px) {
-  .transaction-table th, .transaction-table td {
-    font-size: 0.75rem;
-    padding: 0.2rem 0.4rem;
+  .transaction-table th,
+  .transaction-table td {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.9rem;
   }
 }
 
@@ -138,6 +138,7 @@ body.light .type-sell {
   color: #008f5a;
 }
 
+/* Dropdown menu */
 .filter-menu {
   position: absolute;
   top: 100%;
@@ -147,11 +148,12 @@ body.light .type-sell {
   max-height: 200px;
   overflow-y: auto;
   border: 1px solid #ccc;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   z-index: 100;
   padding: 0.5rem;
 }
 
+/* Dropdown items */
 .filter-menu label {
   display: block;
   margin-bottom: 0.3rem;
@@ -168,21 +170,22 @@ body.light .type-sell {
 .filter-menu::-webkit-scrollbar {
   width: 6px;
 }
+
 .filter-menu::-webkit-scrollbar-thumb {
-  background-color: rgba(0,0,0,0.2);
+  background-color: rgba(0, 0, 0, 0.2);
   border-radius: 3px;
 }
 
 /* Light mode dropdown */
 body.light .filter-menu {
-  background-color: #fff;
-  color: #000;
+  background-color: #ffffff;
+  color: #000000; /* black text */
   border-color: #008f5a;
 }
 
 /* Dark mode dropdown */
 body.dark .filter-menu {
-  background-color: #222;
-  color: #f0f3f2ff;
+  background-color: #222;   /* ✅ dark background */
+  color: #f0f3f2ff;         /* ✅ light text */
   border-color: #00ff99;
 }

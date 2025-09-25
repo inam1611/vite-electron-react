@@ -147,6 +147,70 @@
 
 // export default Transactions;
 
+// import React, { useState, useEffect } from "react";
+// import TransactionsForm from "../forms/TransactionsForm";
+// import TransactionTable from "../tables/TransactionTable";
+// import { TRANSACTION_HEADERS } from "../../shared_config/transaction_config.js";
+
+// function Transactions() {
+//   const [transactions, setTransactions] = useState([]);
+
+//   const fetchTransactions = async () => {
+//     try {
+//       const rows = await window.electronAPI.readTransactions();
+//       setTransactions(rows);
+//     } catch (error) {
+//       console.error("❌ Error fetching transactions:", error);
+//     }
+//   };
+
+//   useEffect(() => {
+//     fetchTransactions();
+//   }, []);
+
+//   const addTransaction = async (transaction) => {
+//     try {
+//       await window.electronAPI.writeTransaction(transaction);
+//       await fetchTransactions();
+//     } catch (err) {
+//       console.error("❌ Failed to add transaction:", err);
+//     }
+//   };
+
+//   const handleDelete = async (index) => {
+//   if (!window.confirm("Are you sure you want to delete this transaction?")) return;
+
+//   try {
+//     const updatedRows = await window.electronAPI.deleteTransaction(index);
+
+//     // If the IPC returned {success: false}, log error
+//     if (!Array.isArray(updatedRows)) {
+//       console.error("❌ Failed to delete transaction:", updatedRows.error);
+//       return;
+//     }
+
+//     // ✅ Update frontend state
+//     setTransactions(updatedRows);
+//   } catch (err) {
+//     console.error("❌ Error deleting transaction:", err);
+//   }
+// };
+
+
+//   return (
+//     <>
+//       <TransactionsForm addTransaction={addTransaction} />
+//       <TransactionTable
+//         headers={TRANSACTION_HEADERS}
+//         transactions={transactions}
+//         onDelete={handleDelete}
+//       />
+//     </>
+//   );
+// }
+
+// export default Transactions;
+
 import React, { useState, useEffect } from "react";
 import TransactionsForm from "../forms/TransactionsForm";
 import TransactionTable from "../tables/TransactionTable";
@@ -155,6 +219,7 @@ import { TRANSACTION_HEADERS } from "../../shared_config/transaction_config.js";
 function Transactions() {
   const [transactions, setTransactions] = useState([]);
 
+  // ✅ Initial load
   const fetchTransactions = async () => {
     try {
       const rows = await window.electronAPI.readTransactions();
@@ -166,36 +231,38 @@ function Transactions() {
 
   useEffect(() => {
     fetchTransactions();
+
+    // ✅ Listen for push updates from Electron main
+    const handler = (event, updatedRows) => {
+      setTransactions(updatedRows);
+    };
+
+    window.electronAPI.onTransactionsUpdated(handler);
+
+    return () => {
+      window.electronAPI.removeTransactionsUpdated(handler);
+    };
   }, []);
 
+  // ✅ Add transaction (main process will push update automatically)
   const addTransaction = async (transaction) => {
     try {
       await window.electronAPI.writeTransaction(transaction);
-      await fetchTransactions();
     } catch (err) {
       console.error("❌ Failed to add transaction:", err);
     }
   };
 
+  // ✅ Delete transaction (main process will push update automatically)
   const handleDelete = async (index) => {
-  if (!window.confirm("Are you sure you want to delete this transaction?")) return;
+    if (!window.confirm("Are you sure you want to delete this transaction?")) return;
 
-  try {
-    const updatedRows = await window.electronAPI.deleteTransaction(index);
-
-    // If the IPC returned {success: false}, log error
-    if (!Array.isArray(updatedRows)) {
-      console.error("❌ Failed to delete transaction:", updatedRows.error);
-      return;
+    try {
+      await window.electronAPI.deleteTransaction(index);
+    } catch (err) {
+      console.error("❌ Error deleting transaction:", err);
     }
-
-    // ✅ Update frontend state
-    setTransactions(updatedRows);
-  } catch (err) {
-    console.error("❌ Error deleting transaction:", err);
-  }
-};
-
+  };
 
   return (
     <>
