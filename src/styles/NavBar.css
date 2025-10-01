@@ -122,3 +122,39 @@ body.light .nav-links a.active {
   text-decoration: underline;
 }
 
+/* === Portfolio Selector (styled like theme toggle) === */
+.portfolio-selector {
+  margin-right: 1.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: 2px solid transparent;
+  font-size: 0.9rem;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.3s ease;
+  appearance: none; /* hide default arrow for consistency */
+}
+
+/* Dark mode */
+body.dark .portfolio-selector {
+  background: #111;
+  color: #00ff99;
+  border-color: #00ff99;
+}
+
+body.dark .portfolio-selector:hover {
+  background: #00ff99;
+  color: #000;
+}
+
+/* Light mode */
+body.light .portfolio-selector {
+  background: #e8fdf4;
+  color: #006644;
+  border-color: #008f5a;
+}
+
+body.light .portfolio-selector:hover {
+  background: #008f5a;
+  color: #fff;
+}

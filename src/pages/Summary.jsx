@@ -471,34 +471,104 @@
 
 // export default Summary;
 
+// import React, { useEffect, useState } from "react";
+// import SummaryTable from "../tables/SummaryTable";
+// import { useSummary } from "../context/SummaryContext";
+// import "../styles/Summary.css";
+
+// function Summary() {
+//   const { summaries, fetchTransactions } = useSummary();
+//   const [activePortfolio, setActivePortfolio] = useState("portfolio1"); // ✅ default
+
+//   // 🔹 Fetch on load + when portfolio changes
+//   useEffect(() => {
+//     fetchTransactions(activePortfolio);
+//   }, [activePortfolio, fetchTransactions]);
+
+//   // 🔹 Auto-refresh and save when main process pushes updates
+//   useEffect(() => {
+//     const handleTxnUpdate = async (_event, { portfolio }) => {
+//       console.log("🔄 Transactions updated → refreshing summary", portfolio);
+//       await fetchTransactions(portfolio || activePortfolio);
+
+//       if (summaries[portfolio || activePortfolio]?.length > 0) {
+//         window.electronAPI.saveSummaries(summaries[portfolio || activePortfolio]);
+//       }
+//     };
+
+//     const handleSummaryUpdate = async (_event, { portfolio }) => {
+//       console.log("🔄 Summary file updated → refreshing summary", portfolio);
+//       await fetchTransactions(portfolio || activePortfolio);
+//     };
+
+//     window.electronAPI.onTransactionsUpdated(handleTxnUpdate);
+//     window.electronAPI.onSummaryUpdated(handleSummaryUpdate);
+
+//     return () => {
+//       window.electronAPI.removeTransactionsUpdated(handleTxnUpdate);
+//       window.electronAPI.removeSummaryUpdated(handleSummaryUpdate);
+//     };
+//   }, [summaries, activePortfolio, fetchTransactions]);
+
+//   return (
+//     <div className="summary-page">
+//       <div className="summary-header">
+//         <h1 className="summary-title">
+//           📊 Summary – {activePortfolio === "portfolio1" ? "Portfolio 1" : "Portfolio 2"}
+//         </h1>
+
+//         {/* 🔹 Portfolio Switcher */}
+//         <div className="portfolio-selector">
+//           <label>Select Portfolio: </label>
+//           <select
+//             value={activePortfolio}
+//             onChange={(e) => setActivePortfolio(e.target.value)}
+//           >
+//             <option value="portfolio1">Portfolio 1</option>
+//             <option value="portfolio2">Portfolio 2</option>
+//           </select>
+//         </div>
+//       </div>
+
+//       {/* 🔹 Show only active portfolio’s summary */}
+//       <SummaryTable summaries={summaries[activePortfolio] || []} />
+//     </div>
+//   );
+// }
+
+// export default Summary;
+
+
 import React, { useEffect } from "react";
 import SummaryTable from "../tables/SummaryTable";
 import { useSummary } from "../context/SummaryContext";
+import { usePortfolio } from "../context/PortfolioContext";
 import "../styles/Summary.css";
 
 function Summary() {
   const { summaries, fetchTransactions } = useSummary();
+  const { activePortfolio } = usePortfolio();
 
-  // 🔹 Fetch once on first load
+  // Fetch when portfolio changes
   useEffect(() => {
-    if (summaries.length === 0) {
-      fetchTransactions();
-    }
-  }, []);
+    fetchTransactions(activePortfolio);
+  }, [activePortfolio, fetchTransactions]);
 
-  // 🔹 Auto-refresh and save when main process pushes updates
+  // Auto-refresh hooks
   useEffect(() => {
-    const handleTxnUpdate = async () => {
-      console.log("🔄 Transactions updated → refreshing summary");
-      await fetchTransactions(); // rebuild summaries
-      if (summaries.length > 0) {
-        window.electronAPI.saveSummaries(summaries); // ✅ sync to Excel
+    const handleTxnUpdate = async (_event, { portfolio }) => {
+      const target = portfolio || activePortfolio;
+      console.log("🔄 Transactions updated → refreshing summary", target);
+      await fetchTransactions(target);
+
+      if (summaries[target]?.length > 0) {
+        window.electronAPI.saveSummaries(summaries[target]);
       }
     };
 
-    const handleSummaryUpdate = async () => {
-      console.log("🔄 Summary file updated → refreshing summary");
-      await fetchTransactions();
+    const handleSummaryUpdate = async (_event, { portfolio }) => {
+      console.log("🔄 Summary file updated → refreshing summary", portfolio);
+      await fetchTransactions(portfolio || activePortfolio);
     };
 
     window.electronAPI.onTransactionsUpdated(handleTxnUpdate);
@@ -508,14 +578,17 @@ function Summary() {
       window.electronAPI.removeTransactionsUpdated(handleTxnUpdate);
       window.electronAPI.removeSummaryUpdated(handleSummaryUpdate);
     };
-  }, [summaries]); // depend on summaries so save always uses latest
+  }, [summaries, activePortfolio, fetchTransactions]);
 
   return (
     <div className="summary-page">
       <div className="summary-header">
-        <h1 className="summary-title">Summary</h1>
+        <h1 className="summary-title">
+          📊 Summary – {activePortfolio === "portfolio1" ? "Portfolio 1" : "Portfolio 2"}
+        </h1>
       </div>
-      <SummaryTable summaries={summaries} />
+
+      <SummaryTable summaries={summaries[activePortfolio] || []} />
     </div>
   );
 }
