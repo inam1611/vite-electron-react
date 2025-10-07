@@ -507,29 +507,133 @@
 
 // export default Transactions;
 
+// import React, { useState, useEffect, useCallback } from "react";
+// import TransactionsForm from "../forms/TransactionsForm";
+// import TransactionTable from "../tables/TransactionTable";
+// import { TRANSACTION_HEADERS } from "../../shared_config/transaction_config.js";
+// import { usePortfolio } from "../context/PortfolioContext"; // ✅ use global context
+// import "../styles/Transactions.css";
+
+// function Transactions() {
+//   const { activePortfolio } = usePortfolio(); // ✅ use global state
+//   const [transactionsByPortfolio, setTransactionsByPortfolio] = useState({
+//     portfolio1: [],
+//     portfolio2: [],
+//   });
+
+//   // 🔹 Helper → sort oldest → newest
+//   const sortByDateAsc = (rows) => {
+//     return [...rows].sort((a, b) => {
+//       const da = new Date(a.Date || a.date);
+//       const db = new Date(b.Date || b.date);
+//       return da - db;
+//     });
+//   };
+
+//   const fetchTransactions = useCallback(async (portfolio) => {
+//     try {
+//       const rows = await window.electronAPI.readTransactions(portfolio);
+//       setTransactionsByPortfolio((prev) => ({
+//         ...prev,
+//         [portfolio]: Array.isArray(rows) ? sortByDateAsc(rows) : [],
+//       }));
+//     } catch (error) {
+//       console.error("❌ Error fetching transactions:", error);
+//       setTransactionsByPortfolio((prev) => ({
+//         ...prev,
+//         [portfolio]: [],
+//       }));
+//     }
+//   }, []);
+
+//   // 🔹 Listen for updates from main process
+//   useEffect(() => {
+//     const handler = (event, { portfolio, data }) => {
+//       if (!portfolio) return;
+//       setTransactionsByPortfolio((prev) => ({
+//         ...prev,
+//         [portfolio]: Array.isArray(data) ? sortByDateAsc(data) : [],
+//       }));
+//     };
+
+//     window.electronAPI.onTransactionsUpdated(handler);
+//     return () => {
+//       window.electronAPI.removeTransactionsUpdated(handler);
+//     };
+//   }, []);
+
+//   // 🔹 Fetch when portfolio changes
+//   useEffect(() => {
+//     if (activePortfolio) {
+//       fetchTransactions(activePortfolio);
+//     }
+//   }, [activePortfolio, fetchTransactions]);
+
+//   const addTransaction = async (transaction) => {
+//     try {
+//       await window.electronAPI.writeTransaction({
+//         ...transaction,
+//         portfolio: activePortfolio,
+//       });
+//       await fetchTransactions(activePortfolio);
+//     } catch (err) {
+//       console.error("❌ Failed to add transaction:", err);
+//     }
+//   };
+
+//   const handleDelete = async (index) => {
+//     if (!window.confirm("Are you sure you want to delete this transaction?")) return;
+//     try {
+//       await window.electronAPI.deleteTransaction(index, activePortfolio);
+//       await fetchTransactions(activePortfolio);
+//     } catch (err) {
+//       console.error("❌ Error deleting transaction:", err);
+//     }
+//   };
+
+//   const currentTransactions = transactionsByPortfolio[activePortfolio] || [];
+
+//   return (
+//     <div className="transactions-page">
+//       {/* 🔹 No portfolio selector here — handled globally in Navbar */}
+//       <TransactionsForm addTransaction={addTransaction} />
+
+//       {currentTransactions.length > 0 ? (
+//         <TransactionTable
+//           headers={TRANSACTION_HEADERS}
+//           transactions={currentTransactions}
+//           portfolio={activePortfolio}
+//           onDelete={handleDelete}
+//         />
+//       ) : (
+//         <p style={{ marginTop: "1rem", fontStyle: "italic" }}>
+//           No transactions in this portfolio yet.
+//         </p>
+//       )}
+//     </div>
+//   );
+// }
+
+// export default Transactions;
+
 import React, { useState, useEffect, useCallback } from "react";
 import TransactionsForm from "../forms/TransactionsForm";
 import TransactionTable from "../tables/TransactionTable";
-import { TRANSACTION_HEADERS } from "../../shared_config/transaction_config.js";
-import { usePortfolio } from "../context/PortfolioContext"; // ✅ use global context
+import { usePortfolio } from "../context/PortfolioContext";
 import "../styles/Transactions.css";
 
 function Transactions() {
-  const { activePortfolio } = usePortfolio(); // ✅ use global state
+  const { activePortfolio } = usePortfolio();
   const [transactionsByPortfolio, setTransactionsByPortfolio] = useState({
     portfolio1: [],
     portfolio2: [],
   });
 
-  // 🔹 Helper → sort oldest → newest
-  const sortByDateAsc = (rows) => {
-    return [...rows].sort((a, b) => {
-      const da = new Date(a.Date || a.date);
-      const db = new Date(b.Date || b.date);
-      return da - db;
-    });
-  };
+  // 🔹 Sort by date ascending (oldest → newest)
+  const sortByDateAsc = (rows) =>
+    [...rows].sort((a, b) => new Date(a.Date || a.date) - new Date(b.Date || b.date));
 
+  // 🔹 Fetch transactions from backend
   const fetchTransactions = useCallback(async (portfolio) => {
     try {
       const rows = await window.electronAPI.readTransactions(portfolio);
@@ -537,38 +641,33 @@ function Transactions() {
         ...prev,
         [portfolio]: Array.isArray(rows) ? sortByDateAsc(rows) : [],
       }));
-    } catch (error) {
-      console.error("❌ Error fetching transactions:", error);
-      setTransactionsByPortfolio((prev) => ({
-        ...prev,
-        [portfolio]: [],
-      }));
+    } catch (err) {
+      console.error("❌ Error fetching transactions:", err);
+      setTransactionsByPortfolio((prev) => ({ ...prev, [portfolio]: [] }));
     }
   }, []);
 
-  // 🔹 Listen for updates from main process
+  // 🔹 Listen to updates from Electron main process
   useEffect(() => {
-    const handler = (event, { portfolio, data }) => {
+    const handler = (_event, { portfolio, data }) => {
       if (!portfolio) return;
       setTransactionsByPortfolio((prev) => ({
         ...prev,
         [portfolio]: Array.isArray(data) ? sortByDateAsc(data) : [],
       }));
     };
-
     window.electronAPI.onTransactionsUpdated(handler);
     return () => {
       window.electronAPI.removeTransactionsUpdated(handler);
     };
   }, []);
 
-  // 🔹 Fetch when portfolio changes
+  // 🔹 Fetch on portfolio change
   useEffect(() => {
-    if (activePortfolio) {
-      fetchTransactions(activePortfolio);
-    }
+    if (activePortfolio) fetchTransactions(activePortfolio);
   }, [activePortfolio, fetchTransactions]);
 
+  // 🔹 Add new transaction
   const addTransaction = async (transaction) => {
     try {
       await window.electronAPI.writeTransaction({
@@ -581,35 +680,46 @@ function Transactions() {
     }
   };
 
-  const handleDelete = async (index) => {
-    if (!window.confirm("Are you sure you want to delete this transaction?")) return;
-    try {
-      await window.electronAPI.deleteTransaction(index, activePortfolio);
-      await fetchTransactions(activePortfolio);
-    } catch (err) {
-      console.error("❌ Error deleting transaction:", err);
-    }
-  };
+  const handleDelete = async (txnToDelete) => {
+  if (!window.confirm("Are you sure you want to delete this transaction?")) return;
+
+  try {
+    // 1️⃣ Read the current transactions from file (unsorted)
+    const rows = await window.electronAPI.readTransactions(activePortfolio);
+    if (!rows || rows.length === 0) return;
+
+    // 2️⃣ Find the actual index of the transaction in the original array
+    const indexInFile = rows.findIndex(
+      (t) =>
+        (t.Date || t.date) === (txnToDelete.Date || txnToDelete.date) &&
+        (t["Stock Symbol"] || t.stockName) === (txnToDelete["Stock Symbol"] || txnToDelete.stockName) &&
+        Number(t["Price per Share"] || t.pricePerShare) === Number(txnToDelete["Price per Share"] || txnToDelete.pricePerShare) &&
+        Number(t["Number of Units"] || t.units) === Number(txnToDelete["Number of Units"] || txnToDelete.units)
+    );
+
+    if (indexInFile === -1) return; // not found
+
+    // 3️⃣ Call deleteTransaction with correct index
+    await window.electronAPI.deleteTransaction(indexInFile, activePortfolio);
+
+    // 4️⃣ Refresh
+    await fetchTransactions(activePortfolio);
+  } catch (err) {
+    console.error("❌ Error deleting transaction:", err);
+  }
+};
+
 
   const currentTransactions = transactionsByPortfolio[activePortfolio] || [];
 
   return (
     <div className="transactions-page">
-      {/* 🔹 No portfolio selector here — handled globally in Navbar */}
       <TransactionsForm addTransaction={addTransaction} />
-
-      {currentTransactions.length > 0 ? (
-        <TransactionTable
-          headers={TRANSACTION_HEADERS}
-          transactions={currentTransactions}
-          portfolio={activePortfolio}
-          onDelete={handleDelete}
-        />
-      ) : (
-        <p style={{ marginTop: "1rem", fontStyle: "italic" }}>
-          No transactions in this portfolio yet.
-        </p>
-      )}
+      <TransactionTable
+        transactions={currentTransactions}
+        portfolio={activePortfolio}
+        onDelete={handleDelete}
+      />
     </div>
   );
 }
