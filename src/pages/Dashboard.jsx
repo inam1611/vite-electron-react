@@ -1129,32 +1129,23 @@ export default function Dashboard() {
   const { summaries, fetchTransactions, isSaving, saveMessage } = useSummary();
 
   const [transactions, setTransactions] = useState([]);
-  const [loading, setLoading] = useState(false);
 
-  // === 🔹 Load summaries and transactions when portfolio changes ===
+  // === 🔹 Load transactions only once at mount or when portfolio changes ===
   useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-
-      // fetchTransactions() from context will update summaries automatically
-      await fetchTransactions(activePortfolio);
-
-      // load transactions separately for charts like InvestmentTrendChart
+    const loadTransactions = async () => {
       const txns = await window.electronAPI.readTransactions(activePortfolio);
       setTransactions(txns || []);
-
-      setLoading(false);
     };
 
-    if (activePortfolio) loadData();
+    if (activePortfolio) loadTransactions();
   }, [activePortfolio]);
 
-  // === 🔹 Reactively update on transaction changes ===
+  // === 🔹 Update only when transactions change via Electron trigger ===
   useEffect(() => {
     const handleTransactionsUpdated = async (_e, payload) => {
       if (payload?.portfolio === activePortfolio) {
-        console.log(`🔁 Transaction update detected, refreshing dashboard`);
-        await fetchTransactions(activePortfolio);
+        console.log(`🔁 Transactions updated for ${activePortfolio}`);
+        await fetchTransactions(activePortfolio); // updates summaries in context
         const txns = await window.electronAPI.readTransactions(activePortfolio);
         setTransactions(txns || []);
       }
@@ -1171,17 +1162,16 @@ export default function Dashboard() {
   return (
     <div className="dashboard-page">
       <h2 className="dashboard-title">
-        Dashboard —{" "}
-        {activePortfolio === "portfolio1" ? "Portfolio 1" : "Portfolio 2"}
+        Dashboard — {activePortfolio === "portfolio1" ? "Portfolio 1" : "Portfolio 2"}
       </h2>
 
-      {(loading || isSaving) ? (
+      {isSaving && (
         <div className="dashboard-status">
-          {loading
-            ? `Loading ${activePortfolio} data…`
-            : saveMessage || "Saving..."}
+          {saveMessage || "Saving..."}
         </div>
-      ) : summaryData.length === 0 ? (
+      )}
+
+      {summaryData.length === 0 ? (
         <div className="dashboard-status">
           No data available for {activePortfolio}
         </div>

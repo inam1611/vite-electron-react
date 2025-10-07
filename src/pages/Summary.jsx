@@ -688,104 +688,32 @@
 
 // export default Summary;
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import SummaryTable from "../tables/SummaryTable";
 import { useSummary } from "../context/SummaryContext";
 import { usePortfolio } from "../context/PortfolioContext";
 import "../styles/Summary.css";
 
 function Summary() {
-  const {
-    summaries,
-    fetchTransactions,
-    saveSummariesForPortfolio,
-    getLastSavedTimestamp,
-  } = useSummary();
   const { activePortfolio } = usePortfolio();
-
-  const debounceTimersRef = useRef({});
+  const { summaries, fetchTransactions, isSaving, saveMessage } = useSummary();
   const [isLoading, setIsLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
 
-  // Debounced fetch handler
-  const debounceFetch = (portfolio, delay = 300) => {
-    if (debounceTimersRef.current[portfolio]) {
-      clearTimeout(debounceTimersRef.current[portfolio]);
-    }
-    debounceTimersRef.current[portfolio] = setTimeout(async () => {
-      setIsLoading(true);
-      try {
-        await fetchTransactions(portfolio);
-      } finally {
-        setIsLoading(false);
-      }
-    }, delay);
-  };
-
-  // Initial fetch or portfolio switch
+  // Load summaries when portfolio changes
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
       try {
-        await fetchTransactions(activePortfolio);
+        await fetchTransactions(activePortfolio); // context updates summaries automatically
       } finally {
         setIsLoading(false);
       }
     };
-    loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activePortfolio]);
 
-  // Auto-refresh: handle updates from Electron main
-  useEffect(() => {
-    const handleTxnUpdate = async (_event, payload) => {
-      const target = payload?.portfolio || activePortfolio;
-      debounceFetch(target, 250);
+    if (activePortfolio) loadData();
+  }, [activePortfolio, fetchTransactions]);
 
-      // Save summary after fetch
-      setTimeout(async () => {
-        const summaryForTarget = summaries[target] || [];
-        if (summaryForTarget.length > 0) {
-          setIsSaving(true);
-          try {
-            await saveSummariesForPortfolio(target);
-          } finally {
-            setIsSaving(false);
-          }
-        }
-      }, 800); // allow fetch to finish first
-    };
-
-    const handleSummaryUpdate = async (_event, payload) => {
-      const portfolio = payload?.portfolio || activePortfolio;
-      const ts = payload?.timestamp || 0;
-      const lastLocalTs = getLastSavedTimestamp(portfolio) || 0;
-
-      const delta = Math.abs(ts - lastLocalTs);
-      if (ts && lastLocalTs && delta < 2000) {
-        console.log(`Ignored summary-updated for ${portfolio} (local write, Δ=${delta}ms)`);
-        return;
-      }
-
-      debounceFetch(portfolio, 250);
-    };
-
-    window.electronAPI.onTransactionsUpdated(handleTxnUpdate);
-    window.electronAPI.onSummaryUpdated(handleSummaryUpdate);
-
-    return () => {
-      window.electronAPI.removeTransactionsUpdated(handleTxnUpdate);
-      window.electronAPI.removeSummaryUpdated(handleSummaryUpdate);
-      Object.values(debounceTimersRef.current).forEach((t) => clearTimeout(t));
-      debounceTimersRef.current = {};
-    };
-  }, [
-    activePortfolio,
-    fetchTransactions,
-    summaries,
-    saveSummariesForPortfolio,
-    getLastSavedTimestamp,
-  ]);
+  const summaryData = summaries[activePortfolio] || [];
 
   return (
     <div className="summary-page">
@@ -793,16 +721,9 @@ function Summary() {
         <h1 className="summary-title">
           📊 Summary – {activePortfolio === "portfolio1" ? "Portfolio 1" : "Portfolio 2"}
         </h1>
-
-        {/* 🔹 Show small status indicator */}
-        {(isLoading || isSaving) && (
-          <div className="summary-status">
-            {isLoading ? "Fetching Updates..." : "Saving summary..."}
-          </div>
-        )}
       </div>
 
-      <SummaryTable summaries={summaries[activePortfolio] || []} />
+      <SummaryTable summaries={summaryData} />
     </div>
   );
 }
