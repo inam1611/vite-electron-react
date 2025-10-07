@@ -712,7 +712,7 @@ function TransactionTable({ transactions, portfolio, onDelete }) {
   return (
     <div className="transaction-table-container">
       <h3 style={{ marginBottom: "0.5rem" }}>
-        {portfolio === "portfolio1" ? "📊 Portfolio 1" : "📊 Portfolio 2"}
+        {portfolio === "portfolio1" ? "📊 K Trade Portfolio" : "📊 JS Global Portfolio"}
       </h3>
       <table className="transaction-table">
         <thead>

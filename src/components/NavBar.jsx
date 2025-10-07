@@ -412,8 +412,8 @@ function Navbar({ theme, toggleTheme }) {
           onChange={(e) => setActivePortfolio(e.target.value)}
           className="portfolio-selector"
         >
-          <option value="portfolio1">Portfolio 1</option>
-          <option value="portfolio2">Portfolio 2</option>
+          <option value="portfolio1">K Trade Portfolio</option>
+          <option value="portfolio2">JS Global Portfolio</option>
         </select>
 
         <button

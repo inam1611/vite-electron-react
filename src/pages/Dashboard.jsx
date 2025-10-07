@@ -1162,7 +1162,7 @@ export default function Dashboard() {
   return (
     <div className="dashboard-page">
       <h2 className="dashboard-title">
-        Dashboard — {activePortfolio === "portfolio1" ? "Portfolio 1" : "Portfolio 2"}
+        Dashboard — {activePortfolio === "portfolio1" ? "K Trade Portfolio" : "JS Global Portfolio"}
       </h2>
 
       {isSaving && (

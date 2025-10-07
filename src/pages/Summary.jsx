@@ -719,7 +719,7 @@ function Summary() {
     <div className="summary-page">
       <div className="summary-header">
         <h1 className="summary-title">
-          📊 Summary – {activePortfolio === "portfolio1" ? "Portfolio 1" : "Portfolio 2"}
+          📊 Summary – {activePortfolio === "portfolio1" ? "K Trade Portfolio" : "JS Global Portfolio"}
         </h1>
       </div>
 
