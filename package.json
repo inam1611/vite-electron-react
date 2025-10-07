@@ -22,7 +22,7 @@
     "@tanstack/react-table": "^8.21.3",
     "ag-grid-community": "^34.1.2",
     "ag-grid-react": "^34.1.2",
-    "axios": "^1.11.0",
+    "axios": "^1.12.2",
     "cheerio": "^1.1.2",
     "concurrently": "^9.2.0",
     "cors": "^2.8.5",
