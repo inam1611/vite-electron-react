@@ -773,54 +773,480 @@
 //   }
 // });
 
+// const { app, BrowserWindow, ipcMain } = require("electron");
+// const path = require("path");
+// const fs = require("fs");
+// const xlsx = require("xlsx");
+// const { TRANSACTION_HEADERS } = require("../shared_config/transaction_config.js");
+
+// // 🔑 Data folder
+// const dataDir = path.join(__dirname, "data");
+
+// // ✅ Portfolio file path helper
+// function getPortfolioFilePath(portfolio) {
+//   return path.join(dataDir, `${portfolio}.xlsx`);
+// }
+
+// // ✅ Summary file path helper
+// function getSummaryFilePath(portfolio) {
+//   return path.join(dataDir, `summary_${portfolio}.xlsx`);
+// }
+
+// // ✅ Ensure folder and Excel file
+// function ensurePortfolioFile(portfolio) {
+//   const filePath = getPortfolioFilePath(portfolio);
+//   if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+//   if (!fs.existsSync(filePath)) {
+//     const wb = xlsx.utils.book_new();
+//     const ws = xlsx.utils.aoa_to_sheet([TRANSACTION_HEADERS]);
+//     xlsx.utils.book_append_sheet(wb, ws, "Transactions");
+//     xlsx.writeFile(wb, filePath);
+//   }
+// }
+
+// function ensureSummaryFile(portfolio) {
+//   const filePath = getSummaryFilePath(portfolio);
+//   if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+//   if (!fs.existsSync(filePath)) {
+//     const wb = xlsx.utils.book_new();
+//     const ws = xlsx.utils.aoa_to_sheet([[
+//       "Stock Ticker", "Name", "Industry", "Last Price", "Shares",
+//       "Cumulative Cost", "Cost per share", "Yield on Cost",
+//       "Unrealized Gain/Loss", "Realized Gain/Loss",
+//       "Dividend Income", "Portfolio %"
+//     ]]);
+//     xlsx.utils.book_append_sheet(wb, ws, "Summary");
+//     xlsx.writeFile(wb, filePath);
+//   }
+// }
+
+// // ✅ Create window
+// function createWindow() {
+//   const win = new BrowserWindow({
+//     width: 1200,
+//     height: 800,
+//     webPreferences: { preload: path.join(__dirname, "preload.js") },
+//   });
+//   win.loadURL("http://localhost:3000");
+// }
+
+// // ✅ App ready
+// app.whenReady().then(() => {
+//   ensurePortfolioFile("portfolio1");
+//   ensurePortfolioFile("portfolio2");
+//   ensureSummaryFile("portfolio1");
+//   ensureSummaryFile("portfolio2");
+//   createWindow();
+// });
+
+// // ✅ IPC: Read Transactions
+// ipcMain.handle("read-transactions", (event, portfolio) => {
+//   try {
+//     const filePath = getPortfolioFilePath(portfolio);
+//     ensurePortfolioFile(portfolio);
+//     const wb = xlsx.readFile(filePath);
+//     const ws = wb.Sheets["Transactions"];
+//     return ws ? xlsx.utils.sheet_to_json(ws, { defval: "" }) : [];
+//   } catch (err) {
+//     console.error("❌ Error reading transactions:", err);
+//     return [];
+//   }
+// });
+
+// // ✅ IPC: Write Transaction
+// ipcMain.handle("write-transaction", async (event, transaction) => {
+//   try {
+//     const { portfolio } = transaction;
+//     const filePath = getPortfolioFilePath(portfolio);
+//     ensurePortfolioFile(portfolio);
+
+//     const workbook = xlsx.readFile(filePath);
+//     const worksheet = workbook.Sheets["Transactions"];
+//     const jsonData = xlsx.utils.sheet_to_json(worksheet);
+
+//     const formattedTransaction = {
+//       Date: transaction.date,
+//       "Stock Symbol": transaction.stockName,
+//       Type: transaction.type,
+//       "Number of Units": transaction.units,
+//       "Price per Share": transaction.price,
+//     };
+//     jsonData.push(formattedTransaction);
+
+//     const newWorksheet = xlsx.utils.json_to_sheet(jsonData, {
+//       header: TRANSACTION_HEADERS,
+//     });
+//     workbook.Sheets["Transactions"] = newWorksheet;
+//     xlsx.writeFile(workbook, filePath);
+
+//     const win = BrowserWindow.getAllWindows()[0];
+//     const timestamp = Date.now();
+//     if (win)
+//       win.webContents.send("transactions-updated", {
+//         portfolio,
+//         rows: jsonData,
+//         timestamp,
+//         source: "main",
+//       });
+//     return { success: true, timestamp };
+//   } catch (err) {
+//     console.error("❌ Error writing transaction:", err);
+//     return { success: false, err };
+//   }
+// });
+
+// // ✅ IPC: Delete Transaction
+// ipcMain.handle("delete-transaction", async (event, index, portfolio) => {
+//   try {
+//     const filePath = getPortfolioFilePath(portfolio);
+//     ensurePortfolioFile(portfolio);
+
+//     const workbook = xlsx.readFile(filePath);
+//     const worksheet = workbook.Sheets["Transactions"];
+//     const rows = xlsx.utils.sheet_to_json(worksheet, { defval: "" });
+
+//     if (index < 0 || index >= rows.length)
+//       return { success: false, error: "Invalid index" };
+
+//     rows.splice(index, 1);
+//     const newWorksheet = xlsx.utils.json_to_sheet(rows, {
+//       header: TRANSACTION_HEADERS,
+//     });
+//     workbook.Sheets["Transactions"] = newWorksheet;
+//     xlsx.writeFile(workbook, filePath);
+
+//     const win = BrowserWindow.getAllWindows()[0];
+//     const timestamp = Date.now();
+//     if (win)
+//       win.webContents.send("transactions-updated", {
+//         portfolio,
+//         rows,
+//         timestamp,
+//         source: "main",
+//       });
+//     return { success: true };
+//   } catch (err) {
+//     console.error("❌ Error deleting transaction:", err);
+//     return { success: false, err };
+//   }
+// });
+
+// // ✅ IPC: Write Summaries — portfolio-specific
+// ipcMain.handle("write-summaries", async (event, payload) => {
+//   try {
+//     let summariesArray = [];
+//     let meta = {};
+//     if (Array.isArray(payload)) {
+//       summariesArray = payload;
+//     } else if (payload && typeof payload === "object") {
+//       summariesArray = payload.summaries || [];
+//       meta = payload.meta || {};
+//     }
+
+//     const portfolio = meta.portfolio || "portfolio1";
+//     const filePath = getSummaryFilePath(portfolio);
+//     ensureSummaryFile(portfolio);
+
+//     const wb = xlsx.utils.book_new();
+//     const ws = xlsx.utils.json_to_sheet(summariesArray);
+//     xlsx.utils.book_append_sheet(wb, ws, "Summary");
+//     xlsx.writeFile(wb, filePath);
+
+//     const win = BrowserWindow.getAllWindows()[0];
+//     const timestamp = Date.now();
+//     if (win)
+//       win.webContents.send("summary-updated", {
+//         portfolio,
+//         timestamp,
+//         source: "main",
+//       });
+
+//     return { success: true, path: filePath, timestamp };
+//   } catch (err) {
+//     console.error("❌ Error writing summary:", err);
+//     return { success: false, err };
+//   }
+// });
+
+// // ✅ IPC: Read Summaries — portfolio-specific
+// ipcMain.handle("read-summaries", async (event, portfolio) => {
+//   try {
+//     const filePath = getSummaryFilePath(portfolio);
+//     ensureSummaryFile(portfolio);
+//     const wb = xlsx.readFile(filePath);
+//     const ws = wb.Sheets["Summary"];
+//     return ws ? xlsx.utils.sheet_to_json(ws, { defval: "" }) : [];
+//   } catch (err) {
+//     console.error("❌ Error reading summary:", err);
+//     return [];
+//   }
+// });
+
+// const { app, BrowserWindow, ipcMain } = require("electron");
+// const path = require("path");
+// const fs = require("fs");
+// const xlsx = require("xlsx");
+// const { TRANSACTION_HEADERS } = require("../shared_config/transaction_config.js");
+
+// const dataDir = path.join(__dirname, "data");
+
+// // === Helpers =====================================================
+
+// function getPortfolioFilePath(portfolio) {
+//   return path.join(dataDir, `${portfolio}.xlsx`);
+// }
+
+// function getSummaryFilePath(portfolio) {
+//   return path.join(dataDir, `summary_${portfolio}.xlsx`);
+// }
+
+// function ensurePortfolioFile(portfolio) {
+//   const filePath = getPortfolioFilePath(portfolio);
+//   if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+//   if (!fs.existsSync(filePath)) {
+//     const wb = xlsx.utils.book_new();
+//     const ws = xlsx.utils.aoa_to_sheet([TRANSACTION_HEADERS]);
+//     xlsx.utils.book_append_sheet(wb, ws, "Transactions");
+//     xlsx.writeFile(wb, filePath);
+//   }
+// }
+
+// function ensureSummaryFile(portfolio) {
+//   const filePath = getSummaryFilePath(portfolio);
+//   if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+//   if (!fs.existsSync(filePath)) {
+//     const wb = xlsx.utils.book_new();
+//     const ws = xlsx.utils.aoa_to_sheet([[
+//       "Stock Ticker", "Name", "Industry", "Last Price", "Shares",
+//       "Cumulative Cost", "Cost per share", "Yield on Cost",
+//       "Unrealized Gain/Loss", "Realized Gain/Loss",
+//       "Dividend Income", "Portfolio %"
+//     ]]);
+//     xlsx.utils.book_append_sheet(wb, ws, "Summary");
+//     xlsx.writeFile(wb, filePath);
+//   }
+// }
+
+// // === App Initialization ==========================================
+
+// function createWindow() {
+//   const win = new BrowserWindow({
+//     width: 1200,
+//     height: 800,
+//     webPreferences: { preload: path.join(__dirname, "preload.js") },
+//   });
+//   win.loadURL("http://localhost:3000");
+// }
+
+// app.whenReady().then(() => {
+//   if (!fs.existsSync(dataDir)) {
+//     fs.mkdirSync(dataDir, { recursive: true });
+//   }
+
+//   // ✅ Create default portfolios only if missing
+//   const portfolios = ["portfolio1", "portfolio2"];
+//   for (const p of portfolios) {
+//     const portfolioPath = getPortfolioFilePath(p);
+//     const summaryPath = getSummaryFilePath(p);
+
+//     if (!fs.existsSync(portfolioPath)) {
+//       console.log(`📁 Creating missing file: ${portfolioPath}`);
+//       ensurePortfolioFile(p);
+//     }
+
+//     if (!fs.existsSync(summaryPath)) {
+//       console.log(`📁 Creating missing file: ${summaryPath}`);
+//       ensureSummaryFile(p);
+//     }
+//   }
+
+//   createWindow();
+// });
+
+
+// // === Transactions ================================================
+
+// ipcMain.handle("read-transactions", (event, portfolio) => {
+//   try {
+//     const filePath = getPortfolioFilePath(portfolio);
+//     ensurePortfolioFile(portfolio);
+//     const wb = xlsx.readFile(filePath);
+//     const ws = wb.Sheets["Transactions"];
+//     return ws ? xlsx.utils.sheet_to_json(ws, { defval: "" }) : [];
+//   } catch (err) {
+//     console.error("❌ Error reading transactions:", err);
+//     return [];
+//   }
+// });
+
+// ipcMain.handle("write-transaction", async (event, transaction) => {
+//   try {
+//     const { portfolio } = transaction;
+//     const filePath = getPortfolioFilePath(portfolio);
+//     ensurePortfolioFile(portfolio);
+
+//     const workbook = xlsx.readFile(filePath);
+//     const worksheet = workbook.Sheets["Transactions"];
+//     const jsonData = xlsx.utils.sheet_to_json(worksheet);
+
+//     const formattedTransaction = {
+//       Date: transaction.date,
+//       "Stock Symbol": transaction.stockName,
+//       Type: transaction.type,
+//       "Number of Units": transaction.units,
+//       "Price per Share": transaction.price,
+//     };
+//     jsonData.push(formattedTransaction);
+
+//     const newWorksheet = xlsx.utils.json_to_sheet(jsonData, {
+//       header: TRANSACTION_HEADERS,
+//     });
+//     workbook.Sheets["Transactions"] = newWorksheet;
+//     xlsx.writeFile(workbook, filePath);
+
+//     const win = BrowserWindow.getAllWindows()[0];
+//     const timestamp = Date.now();
+//     if (win)
+//       win.webContents.send("transactions-updated", {
+//         portfolio,
+//         rows: jsonData,
+//         timestamp,
+//         source: "main",
+//       });
+
+//     return { success: true, timestamp };
+//   } catch (err) {
+//     console.error("❌ Error writing transaction:", err);
+//     return { success: false, err };
+//   }
+// });
+
+// ipcMain.handle("delete-transaction", async (event, index, portfolio) => {
+//   try {
+//     const filePath = getPortfolioFilePath(portfolio);
+//     ensurePortfolioFile(portfolio);
+
+//     const workbook = xlsx.readFile(filePath);
+//     const worksheet = workbook.Sheets["Transactions"];
+//     const rows = xlsx.utils.sheet_to_json(worksheet, { defval: "" });
+
+//     if (index < 0 || index >= rows.length)
+//       return { success: false, error: "Invalid index" };
+
+//     rows.splice(index, 1);
+//     const newWorksheet = xlsx.utils.json_to_sheet(rows, {
+//       header: TRANSACTION_HEADERS,
+//     });
+//     workbook.Sheets["Transactions"] = newWorksheet;
+//     xlsx.writeFile(workbook, filePath);
+
+//     const win = BrowserWindow.getAllWindows()[0];
+//     const timestamp = Date.now();
+//     if (win)
+//       win.webContents.send("transactions-updated", {
+//         portfolio,
+//         rows,
+//         timestamp,
+//         source: "main",
+//       });
+
+//     return { success: true };
+//   } catch (err) {
+//     console.error("❌ Error deleting transaction:", err);
+//     return { success: false, err };
+//   }
+// });
+
+// // === Summaries ===================================================
+
+// ipcMain.handle("write-summaries", async (event, payload) => {
+//   try {
+//     let summariesArray = [];
+//     let meta = {};
+//     if (Array.isArray(payload)) {
+//       summariesArray = payload;
+//     } else if (payload && typeof payload === "object") {
+//       summariesArray = payload.summaries || [];
+//       meta = payload.meta || {};
+//     }
+
+//     const portfolio = meta.portfolio || "portfolio1";
+//     const filePath = getSummaryFilePath(portfolio);
+//     ensureSummaryFile(portfolio);
+
+//     const wb = xlsx.utils.book_new();
+//     const ws = xlsx.utils.json_to_sheet(summariesArray);
+//     xlsx.utils.book_append_sheet(wb, ws, "Summary");
+//     xlsx.writeFile(wb, filePath);
+
+//     const win = BrowserWindow.getAllWindows()[0];
+//     const timestamp = Date.now();
+
+//     if (win) {
+//       // 🔹 Notify Summary page
+//       win.webContents.send("summary-updated", {
+//         portfolio,
+//         timestamp,
+//         source: "main",
+//       });
+//       // 🔹 Notify Dashboard for auto-refresh
+//       win.webContents.send("summaries-updated", {
+//         portfolio,
+//         timestamp,
+//         source: "main",
+//       });
+//     }
+
+//     return { success: true, path: filePath, timestamp };
+//   } catch (err) {
+//     console.error("❌ Error writing summary:", err);
+//     return { success: false, err };
+//   }
+// });
+
+// ipcMain.handle("read-summaries", async (event, portfolio) => {
+//   try {
+//     const filePath = getSummaryFilePath(portfolio);
+//     ensureSummaryFile(portfolio);
+//     const wb = xlsx.readFile(filePath);
+//     const ws = wb.Sheets["Summary"];
+//     return ws ? xlsx.utils.sheet_to_json(ws, { defval: "" }) : [];
+//   } catch (err) {
+//     console.error("❌ Error reading summary:", err);
+//     return [];
+//   }
+// });
+
 const { app, BrowserWindow, ipcMain } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const xlsx = require("xlsx");
 const { TRANSACTION_HEADERS } = require("../shared_config/transaction_config.js");
 
-// 🔑 Data folder
 const dataDir = path.join(__dirname, "data");
 
-// ✅ Portfolio file path helper
+// === Helpers =====================================================
+
 function getPortfolioFilePath(portfolio) {
   return path.join(dataDir, `${portfolio}.xlsx`);
 }
 
-// ✅ Summary file path helper
 function getSummaryFilePath(portfolio) {
   return path.join(dataDir, `summary_${portfolio}.xlsx`);
 }
 
-// ✅ Ensure folder and Excel file
-function ensurePortfolioFile(portfolio) {
-  const filePath = getPortfolioFilePath(portfolio);
+function ensureFileExists(filePath, headers, sheetName) {
   if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
   if (!fs.existsSync(filePath)) {
     const wb = xlsx.utils.book_new();
-    const ws = xlsx.utils.aoa_to_sheet([TRANSACTION_HEADERS]);
-    xlsx.utils.book_append_sheet(wb, ws, "Transactions");
+    const ws = xlsx.utils.aoa_to_sheet([headers]);
+    xlsx.utils.book_append_sheet(wb, ws, sheetName);
     xlsx.writeFile(wb, filePath);
   }
 }
 
-function ensureSummaryFile(portfolio) {
-  const filePath = getSummaryFilePath(portfolio);
-  if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
-  if (!fs.existsSync(filePath)) {
-    const wb = xlsx.utils.book_new();
-    const ws = xlsx.utils.aoa_to_sheet([[
-      "Stock Ticker", "Name", "Industry", "Last Price", "Shares",
-      "Cumulative Cost", "Cost per share", "Yield on Cost",
-      "Unrealized Gain/Loss", "Realized Gain/Loss",
-      "Dividend Income", "Portfolio %"
-    ]]);
-    xlsx.utils.book_append_sheet(wb, ws, "Summary");
-    xlsx.writeFile(wb, filePath);
-  }
-}
+// === App Initialization ==========================================
 
-// ✅ Create window
 function createWindow() {
   const win = new BrowserWindow({
     width: 1200,
@@ -830,20 +1256,29 @@ function createWindow() {
   win.loadURL("http://localhost:3000");
 }
 
-// ✅ App ready
 app.whenReady().then(() => {
-  ensurePortfolioFile("portfolio1");
-  ensurePortfolioFile("portfolio2");
-  ensureSummaryFile("portfolio1");
-  ensureSummaryFile("portfolio2");
+  if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+  const portfolios = ["portfolio1", "portfolio2"];
+
+  for (const p of portfolios) {
+    ensureFileExists(getPortfolioFilePath(p), TRANSACTION_HEADERS, "Transactions");
+    ensureFileExists(getSummaryFilePath(p), [
+      "Stock Ticker", "Name", "Industry", "Last Price", "Shares",
+      "Cumulative Cost", "Cost per share", "Yield on Cost",
+      "Unrealized Gain/Loss", "Realized Gain/Loss",
+      "Dividend Income", "Portfolio %"
+    ], "Summary");
+  }
+
   createWindow();
 });
 
-// ✅ IPC: Read Transactions
+// === Transactions ================================================
+
 ipcMain.handle("read-transactions", (event, portfolio) => {
   try {
     const filePath = getPortfolioFilePath(portfolio);
-    ensurePortfolioFile(portfolio);
+    ensureFileExists(filePath, TRANSACTION_HEADERS, "Transactions");
     const wb = xlsx.readFile(filePath);
     const ws = wb.Sheets["Transactions"];
     return ws ? xlsx.utils.sheet_to_json(ws, { defval: "" }) : [];
@@ -853,12 +1288,11 @@ ipcMain.handle("read-transactions", (event, portfolio) => {
   }
 });
 
-// ✅ IPC: Write Transaction
 ipcMain.handle("write-transaction", async (event, transaction) => {
   try {
     const { portfolio } = transaction;
     const filePath = getPortfolioFilePath(portfolio);
-    ensurePortfolioFile(portfolio);
+    ensureFileExists(filePath, TRANSACTION_HEADERS, "Transactions");
 
     const workbook = xlsx.readFile(filePath);
     const worksheet = workbook.Sheets["Transactions"];
@@ -879,15 +1313,16 @@ ipcMain.handle("write-transaction", async (event, transaction) => {
     workbook.Sheets["Transactions"] = newWorksheet;
     xlsx.writeFile(workbook, filePath);
 
-    const win = BrowserWindow.getAllWindows()[0];
     const timestamp = Date.now();
-    if (win)
+    BrowserWindow.getAllWindows().forEach((win) => {
       win.webContents.send("transactions-updated", {
         portfolio,
         rows: jsonData,
         timestamp,
         source: "main",
       });
+    });
+
     return { success: true, timestamp };
   } catch (err) {
     console.error("❌ Error writing transaction:", err);
@@ -895,11 +1330,10 @@ ipcMain.handle("write-transaction", async (event, transaction) => {
   }
 });
 
-// ✅ IPC: Delete Transaction
 ipcMain.handle("delete-transaction", async (event, index, portfolio) => {
   try {
     const filePath = getPortfolioFilePath(portfolio);
-    ensurePortfolioFile(portfolio);
+    ensureFileExists(filePath, TRANSACTION_HEADERS, "Transactions");
 
     const workbook = xlsx.readFile(filePath);
     const worksheet = workbook.Sheets["Transactions"];
@@ -915,15 +1349,27 @@ ipcMain.handle("delete-transaction", async (event, index, portfolio) => {
     workbook.Sheets["Transactions"] = newWorksheet;
     xlsx.writeFile(workbook, filePath);
 
-    const win = BrowserWindow.getAllWindows()[0];
     const timestamp = Date.now();
-    if (win)
+    BrowserWindow.getAllWindows().forEach((win) => {
+      // ✅ Notify all renderers of changes
       win.webContents.send("transactions-updated", {
         portfolio,
         rows,
         timestamp,
         source: "main",
       });
+      win.webContents.send("summary-updated", {
+        portfolio,
+        timestamp,
+        source: "main",
+      });
+      win.webContents.send("summaries-updated", {
+        portfolio,
+        timestamp,
+        source: "main",
+      });
+    });
+
     return { success: true };
   } catch (err) {
     console.error("❌ Error deleting transaction:", err);
@@ -931,7 +1377,8 @@ ipcMain.handle("delete-transaction", async (event, index, portfolio) => {
   }
 });
 
-// ✅ IPC: Write Summaries — portfolio-specific
+// === Summaries ===================================================
+
 ipcMain.handle("write-summaries", async (event, payload) => {
   try {
     let summariesArray = [];
@@ -945,21 +1392,23 @@ ipcMain.handle("write-summaries", async (event, payload) => {
 
     const portfolio = meta.portfolio || "portfolio1";
     const filePath = getSummaryFilePath(portfolio);
-    ensureSummaryFile(portfolio);
+    ensureFileExists(filePath, [
+      "Stock Ticker", "Name", "Industry", "Last Price", "Shares",
+      "Cumulative Cost", "Cost per share", "Yield on Cost",
+      "Unrealized Gain/Loss", "Realized Gain/Loss",
+      "Dividend Income", "Portfolio %"
+    ], "Summary");
 
     const wb = xlsx.utils.book_new();
     const ws = xlsx.utils.json_to_sheet(summariesArray);
     xlsx.utils.book_append_sheet(wb, ws, "Summary");
     xlsx.writeFile(wb, filePath);
 
-    const win = BrowserWindow.getAllWindows()[0];
     const timestamp = Date.now();
-    if (win)
-      win.webContents.send("summary-updated", {
-        portfolio,
-        timestamp,
-        source: "main",
-      });
+    BrowserWindow.getAllWindows().forEach((win) => {
+      win.webContents.send("summary-updated", { portfolio, timestamp, source: "main" });
+      win.webContents.send("summaries-updated", { portfolio, timestamp, source: "main" });
+    });
 
     return { success: true, path: filePath, timestamp };
   } catch (err) {
@@ -968,11 +1417,16 @@ ipcMain.handle("write-summaries", async (event, payload) => {
   }
 });
 
-// ✅ IPC: Read Summaries — portfolio-specific
 ipcMain.handle("read-summaries", async (event, portfolio) => {
   try {
     const filePath = getSummaryFilePath(portfolio);
-    ensureSummaryFile(portfolio);
+    ensureFileExists(filePath, [
+      "Stock Ticker", "Name", "Industry", "Last Price", "Shares",
+      "Cumulative Cost", "Cost per share", "Yield on Cost",
+      "Unrealized Gain/Loss", "Realized Gain/Loss",
+      "Dividend Income", "Portfolio %"
+    ], "Summary");
+
     const wb = xlsx.readFile(filePath);
     const ws = wb.Sheets["Summary"];
     return ws ? xlsx.utils.sheet_to_json(ws, { defval: "" }) : [];

@@ -72,6 +72,70 @@ body.dark .refresh-button:hover:not(:disabled) svg {
   }
 } 
 
+.summary-status {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #00cc88;
+  color: #fff;
+  padding: 14px 28px;
+  border-radius: 14px;
+  font-size: 1.05rem;
+  font-weight: 500;
+  text-align: center;
+  z-index: 2000;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(8px);
+  letter-spacing: 0.5px;
+
+  animation: fadeSlideInOut 4.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ✨ Smooth fade + slide animation */
+@keyframes fadeSlideInOut {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -60%) scale(0.95);
+  }
+  15% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  85% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -55%) scale(0.97);
+  }
+}
+
+/* Optional: subtle pulse while visible */
+.summary-status::after {
+  content: "";
+  display: inline-block;
+  margin-left: 8px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #123829;
+  animation: pulse 1.2s infinite ease-in-out;
+  vertical-align: middle;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
 
 
 

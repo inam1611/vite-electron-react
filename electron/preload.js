@@ -117,10 +117,104 @@
 //     ipcRenderer.removeListener("summary-updated", callback),
 // });
 
+// const { contextBridge, ipcRenderer } = require("electron");
+
+// contextBridge.exposeInMainWorld("electronAPI", {
+//   // 🔹 Transactions
+//   readTransactions: (portfolio) =>
+//     ipcRenderer.invoke("read-transactions", portfolio),
+
+//   writeTransaction: (transaction) =>
+//     ipcRenderer.invoke("write-transaction", transaction),
+
+//   deleteTransaction: (index, portfolio) =>
+//     ipcRenderer.invoke("delete-transaction", index, portfolio),
+
+//   // 🔹 Summaries — now portfolio-specific
+//   saveSummaries: (summaries, options = {}) => {
+//     const meta = {
+//       source: "renderer",
+//       timestamp: Date.now(),
+//       ...(options.portfolio ? { portfolio: options.portfolio } : {}),
+//     };
+//     return ipcRenderer.invoke("write-summaries", { summaries, meta });
+//   },
+
+//   readSummaries: (portfolio) =>
+//     ipcRenderer.invoke("read-summaries", portfolio),
+
+//   // 🔹 Event listeners
+//   onTransactionsUpdated: (callback) =>
+//     ipcRenderer.on("transactions-updated", (event, payload) =>
+//       callback(event, payload)
+//     ),
+//   removeTransactionsUpdated: (callback) =>
+//     ipcRenderer.removeListener("transactions-updated", callback),
+
+//   onSummaryUpdated: (callback) =>
+//     ipcRenderer.on("summary-updated", (event, payload) =>
+//       callback(event, payload)
+//     ),
+//   removeSummaryUpdated: (callback) =>
+//     ipcRenderer.removeListener("summary-updated", callback),
+// });
+
+// const { contextBridge, ipcRenderer } = require("electron");
+
+// contextBridge.exposeInMainWorld("electronAPI", {
+//   // 🔹 Transactions
+//   readTransactions: (portfolio) =>
+//     ipcRenderer.invoke("read-transactions", portfolio),
+
+//   writeTransaction: (transaction) =>
+//     ipcRenderer.invoke("write-transaction", transaction),
+
+//   deleteTransaction: (index, portfolio) =>
+//     ipcRenderer.invoke("delete-transaction", index, portfolio),
+
+//   // 🔹 Summaries (portfolio-specific)
+//   saveSummaries: (summaries, options = {}) => {
+//     const meta = {
+//       source: "renderer",
+//       timestamp: Date.now(),
+//       ...(options.portfolio ? { portfolio: options.portfolio } : {}),
+//     };
+//     return ipcRenderer.invoke("write-summaries", { summaries, meta });
+//   },
+
+//   readSummaries: (portfolio) => ipcRenderer.invoke("read-summaries", portfolio),
+
+//   // === Event Listeners ==========================================
+
+//   // 🔸 Transaction updates
+//   onTransactionsUpdated: (callback) =>
+//     ipcRenderer.on("transactions-updated", (event, payload) =>
+//       callback(event, payload)
+//     ),
+//   removeTransactionsUpdated: (callback) =>
+//     ipcRenderer.removeListener("transactions-updated", callback),
+
+//   // 🔸 Summary updates (single portfolio)
+//   onSummaryUpdated: (callback) =>
+//     ipcRenderer.on("summary-updated", (event, payload) =>
+//       callback(event, payload)
+//     ),
+//   removeSummaryUpdated: (callback) =>
+//     ipcRenderer.removeListener("summary-updated", callback),
+
+//   // 🔸 Global summaries updated (for Dashboard auto-refresh)
+//   onSummariesUpdated: (callback) =>
+//     ipcRenderer.on("summaries-updated", (event, payload) =>
+//       callback(event, payload)
+//     ),
+//   removeSummariesUpdated: (callback) =>
+//     ipcRenderer.removeListener("summaries-updated", callback),
+// });
+
 const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("electronAPI", {
-  // 🔹 Transactions
+  // === Transactions ===
   readTransactions: (portfolio) =>
     ipcRenderer.invoke("read-transactions", portfolio),
 
@@ -130,7 +224,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   deleteTransaction: (index, portfolio) =>
     ipcRenderer.invoke("delete-transaction", index, portfolio),
 
-  // 🔹 Summaries — now portfolio-specific
+  // === Summaries ===
   saveSummaries: (summaries, options = {}) => {
     const meta = {
       source: "renderer",
@@ -140,10 +234,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
     return ipcRenderer.invoke("write-summaries", { summaries, meta });
   },
 
-  readSummaries: (portfolio) =>
-    ipcRenderer.invoke("read-summaries", portfolio),
+  readSummaries: (portfolio) => ipcRenderer.invoke("read-summaries", portfolio),
 
-  // 🔹 Event listeners
+  // === Event Listeners ===
   onTransactionsUpdated: (callback) =>
     ipcRenderer.on("transactions-updated", (event, payload) =>
       callback(event, payload)
@@ -157,4 +250,11 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ),
   removeSummaryUpdated: (callback) =>
     ipcRenderer.removeListener("summary-updated", callback),
+
+  onSummariesUpdated: (callback) =>
+    ipcRenderer.on("summaries-updated", (event, payload) =>
+      callback(event, payload)
+    ),
+  removeSummariesUpdated: (callback) =>
+    ipcRenderer.removeListener("summaries-updated", callback),
 });

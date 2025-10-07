@@ -595,50 +595,165 @@
 
 // export default Summary;
 
-// Summary.jsx
-import React, { useEffect, useRef } from "react";
+// // Summary.jsx
+// import React, { useEffect, useRef } from "react";
+// import SummaryTable from "../tables/SummaryTable";
+// import { useSummary } from "../context/SummaryContext";
+// import { usePortfolio } from "../context/PortfolioContext";
+// import "../styles/Summary.css";
+
+// function Summary() {
+//   const { summaries, fetchTransactions, saveSummariesForPortfolio, getLastSavedTimestamp } =
+//     useSummary();
+//   const { activePortfolio } = usePortfolio();
+
+//   // Keep debounce timers per portfolio
+//   const debounceTimersRef = useRef({});
+
+//   const debounceFetch = (portfolio, delay = 300) => {
+//     if (debounceTimersRef.current[portfolio]) {
+//       clearTimeout(debounceTimersRef.current[portfolio]);
+//     }
+//     debounceTimersRef.current[portfolio] = setTimeout(async () => {
+//       await fetchTransactions(portfolio);
+//     }, delay);
+//   };
+
+//   // Fetch when portfolio changes (initial load / user switch)
+//   useEffect(() => {
+//     fetchTransactions(activePortfolio);
+//     // eslint-disable-next-line react-hooks/exhaustive-deps
+//   }, [activePortfolio]);
+
+//   // Auto-refresh hooks: listen to main process events but debounce & ignore self-originated writes
+//   useEffect(() => {
+//     const handleTxnUpdate = async (_event, payload) => {
+//       const target = payload?.portfolio || activePortfolio;
+//       // Debounce quick bursts
+//       debounceFetch(target, 250);
+
+//       // After a small delay (allow fetch to complete), save the new summary (use centralized save)
+//       setTimeout(async () => {
+//         const summaryForTarget = summaries[target] || [];
+//         if (summaryForTarget.length > 0) {
+//           await saveSummariesForPortfolio(target);
+//         }
+//       }, 700); // 700ms gives enough time for fetchTransactions to complete in most cases
+//     };
+
+//     const handleSummaryUpdate = async (_event, payload) => {
+//       const portfolio = payload?.portfolio || activePortfolio;
+//       const ts = payload?.timestamp || 0;
+//       const lastLocalTs = getLastSavedTimestamp(portfolio) || 0;
+
+//       // If timestamp is close to our last local save, it's likely our own write — ignore
+//       const delta = Math.abs(ts - lastLocalTs);
+//       if (ts && lastLocalTs && delta < 2000) {
+//         // ignore events caused by ourselves
+//         console.log(`Ignored summary-updated for ${portfolio} (local write, Δ=${delta}ms)`);
+//         return;
+//       }
+
+//       // Otherwise, we should refresh (debounced)
+//       debounceFetch(portfolio, 250);
+//     };
+
+//     // Register handlers
+//     window.electronAPI.onTransactionsUpdated(handleTxnUpdate);
+//     window.electronAPI.onSummaryUpdated(handleSummaryUpdate);
+
+//     // Cleanup
+//     return () => {
+//       window.electronAPI.removeTransactionsUpdated(handleTxnUpdate);
+//       window.electronAPI.removeSummaryUpdated(handleSummaryUpdate);
+
+//       // clear any pending timers
+//       Object.values(debounceTimersRef.current).forEach((t) => clearTimeout(t));
+//       debounceTimersRef.current = {};
+//     };
+//   }, [activePortfolio, fetchTransactions, summaries, saveSummariesForPortfolio, getLastSavedTimestamp]);
+
+//   return (
+//     <div className="summary-page">
+//       <div className="summary-header">
+//         <h1 className="summary-title">
+//           📊 Summary – {activePortfolio === "portfolio1" ? "Portfolio 1" : "Portfolio 2"}
+//         </h1>
+//       </div>
+
+//       <SummaryTable summaries={summaries[activePortfolio] || []} />
+//     </div>
+//   );
+// }
+
+// export default Summary;
+
+import React, { useEffect, useRef, useState } from "react";
 import SummaryTable from "../tables/SummaryTable";
 import { useSummary } from "../context/SummaryContext";
 import { usePortfolio } from "../context/PortfolioContext";
 import "../styles/Summary.css";
 
 function Summary() {
-  const { summaries, fetchTransactions, saveSummariesForPortfolio, getLastSavedTimestamp } =
-    useSummary();
+  const {
+    summaries,
+    fetchTransactions,
+    saveSummariesForPortfolio,
+    getLastSavedTimestamp,
+  } = useSummary();
   const { activePortfolio } = usePortfolio();
 
-  // Keep debounce timers per portfolio
   const debounceTimersRef = useRef({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
+  // Debounced fetch handler
   const debounceFetch = (portfolio, delay = 300) => {
     if (debounceTimersRef.current[portfolio]) {
       clearTimeout(debounceTimersRef.current[portfolio]);
     }
     debounceTimersRef.current[portfolio] = setTimeout(async () => {
-      await fetchTransactions(portfolio);
+      setIsLoading(true);
+      try {
+        await fetchTransactions(portfolio);
+      } finally {
+        setIsLoading(false);
+      }
     }, delay);
   };
 
-  // Fetch when portfolio changes (initial load / user switch)
+  // Initial fetch or portfolio switch
   useEffect(() => {
-    fetchTransactions(activePortfolio);
+    const loadData = async () => {
+      setIsLoading(true);
+      try {
+        await fetchTransactions(activePortfolio);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activePortfolio]);
 
-  // Auto-refresh hooks: listen to main process events but debounce & ignore self-originated writes
+  // Auto-refresh: handle updates from Electron main
   useEffect(() => {
     const handleTxnUpdate = async (_event, payload) => {
       const target = payload?.portfolio || activePortfolio;
-      // Debounce quick bursts
       debounceFetch(target, 250);
 
-      // After a small delay (allow fetch to complete), save the new summary (use centralized save)
+      // Save summary after fetch
       setTimeout(async () => {
         const summaryForTarget = summaries[target] || [];
         if (summaryForTarget.length > 0) {
-          await saveSummariesForPortfolio(target);
+          setIsSaving(true);
+          try {
+            await saveSummariesForPortfolio(target);
+          } finally {
+            setIsSaving(false);
+          }
         }
-      }, 700); // 700ms gives enough time for fetchTransactions to complete in most cases
+      }, 800); // allow fetch to finish first
     };
 
     const handleSummaryUpdate = async (_event, payload) => {
@@ -646,32 +761,31 @@ function Summary() {
       const ts = payload?.timestamp || 0;
       const lastLocalTs = getLastSavedTimestamp(portfolio) || 0;
 
-      // If timestamp is close to our last local save, it's likely our own write — ignore
       const delta = Math.abs(ts - lastLocalTs);
       if (ts && lastLocalTs && delta < 2000) {
-        // ignore events caused by ourselves
         console.log(`Ignored summary-updated for ${portfolio} (local write, Δ=${delta}ms)`);
         return;
       }
 
-      // Otherwise, we should refresh (debounced)
       debounceFetch(portfolio, 250);
     };
 
-    // Register handlers
     window.electronAPI.onTransactionsUpdated(handleTxnUpdate);
     window.electronAPI.onSummaryUpdated(handleSummaryUpdate);
 
-    // Cleanup
     return () => {
       window.electronAPI.removeTransactionsUpdated(handleTxnUpdate);
       window.electronAPI.removeSummaryUpdated(handleSummaryUpdate);
-
-      // clear any pending timers
       Object.values(debounceTimersRef.current).forEach((t) => clearTimeout(t));
       debounceTimersRef.current = {};
     };
-  }, [activePortfolio, fetchTransactions, summaries, saveSummariesForPortfolio, getLastSavedTimestamp]);
+  }, [
+    activePortfolio,
+    fetchTransactions,
+    summaries,
+    saveSummariesForPortfolio,
+    getLastSavedTimestamp,
+  ]);
 
   return (
     <div className="summary-page">
@@ -679,6 +793,13 @@ function Summary() {
         <h1 className="summary-title">
           📊 Summary – {activePortfolio === "portfolio1" ? "Portfolio 1" : "Portfolio 2"}
         </h1>
+
+        {/* 🔹 Show small status indicator */}
+        {(isLoading || isSaving) && (
+          <div className="summary-status">
+            {isLoading ? "Fetching Updates..." : "Saving summary..."}
+          </div>
+        )}
       </div>
 
       <SummaryTable summaries={summaries[activePortfolio] || []} />

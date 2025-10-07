@@ -676,6 +676,443 @@
 //   );
 // }
 
+// import React, { useEffect, useState } from "react";
+// import SummaryCharts from "../charts/SummaryCharts";
+// import IndustryChart from "../charts/IndustryChart";
+// import GainLossChart from "../charts/GainLossChart";
+// import DividendChart from "../charts/DividendChart";
+// import PriceChangeChart from "../charts/PriceChangeChart";
+// import InvestmentTrendChart from "../charts/InvestmentTrendChart";
+// import "../styles/dashboard.css";
+
+// export default function Dashboard() {
+//   const [summaries, setSummaries] = useState([]);
+//   const [transactions, setTransactions] = useState([]);
+
+//   useEffect(() => {
+//     const fetchData = async () => {
+//       const summaryData = await window.electronAPI.readSummaries();
+//       const transactionData = await window.electronAPI.readTransactions();
+//       setSummaries(summaryData);
+//       setTransactions(transactionData);
+//     };
+//     fetchData();
+//   }, []);
+
+//   return (
+//     <div className="dashboard-page">
+//       <h2 className="dashboard-title">Dashboard</h2>
+
+//       {/* Top Row */}
+//       <div className="charts-row">
+//         <SummaryCharts summaries={summaries} />
+//         <IndustryChart summaries={summaries} />
+//       </div>
+
+//       {/* Middle Row */}
+//       <div className="charts-row">
+//         <GainLossChart summaries={summaries} />
+//         <DividendChart summaries={summaries} />
+//       </div>
+
+//       {/* Bottom Row */}
+//       <div className="charts-row">
+//         <PriceChangeChart summaries={summaries} />
+//         <InvestmentTrendChart transactions={transactions} />
+//       </div>
+//     </div>
+//   );
+// }
+
+
+// import React, { useEffect, useState } from "react";
+// import SummaryCharts from "../charts/SummaryCharts";
+// import IndustryChart from "../charts/IndustryChart";
+// import GainLossChart from "../charts/GainLossChart";
+// import DividendChart from "../charts/DividendChart";
+// import PriceChangeChart from "../charts/PriceChangeChart";
+// import InvestmentTrendChart from "../charts/InvestmentTrendChart";
+// import { usePortfolio } from "../context/PortfolioContext";
+// import "../styles/dashboard.css";
+
+// export default function Dashboard() {
+//   const { activePortfolio } = usePortfolio();
+//   const [summaries, setSummaries] = useState([]);
+//   const [transactions, setTransactions] = useState([]);
+//   const [loading, setLoading] = useState(false);
+
+//   const fetchData = async (portfolioKey) => {
+//     try {
+//       setLoading(true);
+
+//       // ✅ Ensure summaries are up-to-date
+//       if (window.electronAPI.refreshSummaries) {
+//         await window.electronAPI.refreshSummaries(portfolioKey);
+//       }
+
+//       const summaryData = await window.electronAPI.readSummaries(portfolioKey);
+//       const transactionData = await window.electronAPI.readTransactions(portfolioKey);
+
+//       setSummaries(summaryData || []);
+//       setTransactions(transactionData || []);
+//     } catch (err) {
+//       console.error("❌ Error loading dashboard data:", err);
+//       setSummaries([]);
+//       setTransactions([]);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   useEffect(() => {
+//     if (activePortfolio) {
+//       fetchData(activePortfolio);
+//     }
+//   }, [activePortfolio]);
+
+//   useEffect(() => {
+//     // ✅ Listen for IPC updates when summaries are refreshed elsewhere
+//     const handleUpdate = () => {
+//       console.log("📢 Summaries updated — refreshing dashboard...");
+//       fetchData(activePortfolio);
+//     };
+
+//     if (window.electronAPI.onSummariesUpdated) {
+//       window.electronAPI.onSummariesUpdated(handleUpdate);
+//     }
+
+//     return () => {
+//       if (window.electronAPI.removeSummariesUpdated) {
+//         window.electronAPI.removeSummariesUpdated(handleUpdate);
+//       }
+//     };
+//   }, [activePortfolio]);
+
+//   return (
+//     <div className="dashboard-page">
+//       <h2 className="dashboard-title">
+//         Dashboard — {activePortfolio === "portfolio1" ? "Portfolio 1" : "Portfolio 2"}
+//       </h2>
+
+//       {loading && (
+//         <div className="dashboard-status">
+//           Refreshing {activePortfolio} data…
+//         </div>
+//       )}
+
+//       {!loading && (
+//         <>
+//           <div className="charts-row">
+//             <SummaryCharts summaries={summaries} />
+//             <IndustryChart summaries={summaries} />
+//           </div>
+
+//           <div className="charts-row">
+//             <GainLossChart summaries={summaries} />
+//             <DividendChart summaries={summaries} />
+//           </div>
+
+//           <div className="charts-row">
+//             <PriceChangeChart summaries={summaries} />
+//             <InvestmentTrendChart transactions={transactions} />
+//           </div>
+//         </>
+//       )}
+//     </div>
+//   );
+// }
+
+// import React, { useEffect, useState } from "react";
+// import SummaryCharts from "../charts/SummaryCharts";
+// import IndustryChart from "../charts/IndustryChart";
+// import GainLossChart from "../charts/GainLossChart";
+// import DividendChart from "../charts/DividendChart";
+// import PriceChangeChart from "../charts/PriceChangeChart";
+// import InvestmentTrendChart from "../charts/InvestmentTrendChart";
+// import { usePortfolio } from "../context/PortfolioContext";
+// import "../styles/dashboard.css";
+
+// export default function Dashboard() {
+//   const { activePortfolio } = usePortfolio();
+//   const [summaries, setSummaries] = useState([]);
+//   const [transactions, setTransactions] = useState([]);
+//   const [loading, setLoading] = useState(false);
+
+//   // ✅ Fetch summaries + transactions from files
+//   const fetchData = async (portfolioKey, showLoader = true) => {
+//     try {
+//       if (showLoader) setLoading(true);
+
+//       const summaryData = await window.electronAPI.readSummaries(portfolioKey);
+//       const transactionData = await window.electronAPI.readTransactions(portfolioKey);
+
+//       setSummaries(summaryData || []);
+//       setTransactions(transactionData || []);
+//     } catch (err) {
+//       console.error("❌ Error loading dashboard data:", err);
+//       setSummaries([]);
+//       setTransactions([]);
+//     } finally {
+//       if (showLoader) setLoading(false);
+//     }
+//   };
+
+//   // ✅ Load immediately when Dashboard mounts
+//   useEffect(() => {
+//     if (activePortfolio) {
+//       console.log(`📊 Initializing dashboard for ${activePortfolio}`);
+//       fetchData(activePortfolio);
+//     }
+//   }, [activePortfolio]);
+
+//   // ✅ Refresh when summaries are updated elsewhere
+//   useEffect(() => {
+//     const handleSummaryUpdated = (_event, payload) => {
+//       if (payload?.portfolio === activePortfolio) {
+//         console.log(`📢 Summary updated for ${payload.portfolio}, reloading dashboard`);
+//         fetchData(activePortfolio, false); // no loader flash
+//       }
+//     };
+
+//     const handleTransactionsUpdated = (_event, payload) => {
+//       if (payload?.portfolio === activePortfolio) {
+//         console.log(`📢 Transactions updated for ${payload.portfolio}, refreshing charts`);
+//         fetchData(activePortfolio, false);
+//       }
+//     };
+
+//     window.electronAPI?.onSummaryUpdated?.(handleSummaryUpdated);
+//     window.electronAPI?.onTransactionsUpdated?.(handleTransactionsUpdated);
+
+//     return () => {
+//       window.electronAPI?.removeSummaryUpdated?.(handleSummaryUpdated);
+//       window.electronAPI?.removeTransactionsUpdated?.(handleTransactionsUpdated);
+//     };
+//   }, [activePortfolio]);
+
+//   return (
+//     <div className="dashboard-page">
+//       <h2 className="dashboard-title">
+//         Dashboard — {activePortfolio === "portfolio1" ? "Portfolio 1" : "Portfolio 2"}
+//       </h2>
+
+//       {loading ? (
+//         <div className="dashboard-status">
+//           Loading {activePortfolio} data…
+//         </div>
+//       ) : (
+//         <>
+//           <div className="charts-row">
+//             <SummaryCharts summaries={summaries} />
+//             <IndustryChart summaries={summaries} />
+//           </div>
+
+//           <div className="charts-row">
+//             <GainLossChart summaries={summaries} />
+//             <DividendChart summaries={summaries} />
+//           </div>
+
+//           <div className="charts-row">
+//             <PriceChangeChart summaries={summaries} />
+//             <InvestmentTrendChart transactions={transactions} />
+//           </div>
+//         </>
+//       )}
+//     </div>
+//   );
+// }
+
+// import React, { useEffect, useState } from "react";
+// import SummaryCharts from "../charts/SummaryCharts";
+// import IndustryChart from "../charts/IndustryChart";
+// import GainLossChart from "../charts/GainLossChart";
+// import DividendChart from "../charts/DividendChart";
+// import PriceChangeChart from "../charts/PriceChangeChart";
+// import InvestmentTrendChart from "../charts/InvestmentTrendChart";
+// import { usePortfolio } from "../context/PortfolioContext";
+// import "../styles/dashboard.css";
+
+// export default function Dashboard() {
+//   const { activePortfolio } = usePortfolio();
+//   const [summaries, setSummaries] = useState([]);
+//   const [transactions, setTransactions] = useState([]);
+//   const [loading, setLoading] = useState(false);
+
+//   // === Load summaries & transactions ===
+//   const fetchData = async (portfolioKey, showLoader = true) => {
+//     try {
+//       if (showLoader) setLoading(true);
+//       const [summaryData, transactionData] = await Promise.all([
+//         window.electronAPI.readSummaries(portfolioKey),
+//         window.electronAPI.readTransactions(portfolioKey),
+//       ]);
+//       setSummaries(summaryData || []);
+//       setTransactions(transactionData || []);
+//     } catch (err) {
+//       console.error("❌ Error loading dashboard data:", err);
+//       setSummaries([]);
+//       setTransactions([]);
+//     } finally {
+//       if (showLoader) setLoading(false);
+//     }
+//   };
+
+//   // === Load on mount or portfolio switch ===
+//   useEffect(() => {
+//     if (activePortfolio) {
+//       console.log(`📊 Loading dashboard for ${activePortfolio}`);
+//       fetchData(activePortfolio);
+//     }
+//   }, [activePortfolio]);
+
+//   // === Listen for backend updates ===
+//   useEffect(() => {
+//     const handleSummaryUpdated = (_e, payload) => {
+//       if (payload?.portfolio === activePortfolio) {
+//         console.log(`📢 Summary updated — refreshing ${activePortfolio}`);
+//         fetchData(activePortfolio, false);
+//       }
+//     };
+
+//     const handleTransactionsUpdated = (_e, payload) => {
+//       if (payload?.portfolio === activePortfolio) {
+//         console.log(`📢 Transactions updated — refreshing ${activePortfolio}`);
+//         fetchData(activePortfolio, false);
+//       }
+//     };
+
+//     window.electronAPI?.onSummaryUpdated?.(handleSummaryUpdated);
+//     window.electronAPI?.onTransactionsUpdated?.(handleTransactionsUpdated);
+
+//     return () => {
+//       window.electronAPI?.removeSummaryUpdated?.(handleSummaryUpdated);
+//       window.electronAPI?.removeTransactionsUpdated?.(handleTransactionsUpdated);
+//     };
+//   }, [activePortfolio]);
+
+//   return (
+//     <div className="dashboard-page">
+//       <h2 className="dashboard-title">
+//         Dashboard — {activePortfolio === "portfolio1" ? "Portfolio 1" : "Portfolio 2"}
+//       </h2>
+
+//       {loading ? (
+//         <div className="dashboard-status">Loading {activePortfolio} data…</div>
+//       ) : (
+//         <>
+//           <div className="charts-row">
+//             <SummaryCharts summaries={summaries} />
+//             <IndustryChart summaries={summaries} />
+//           </div>
+
+//           <div className="charts-row">
+//             <GainLossChart summaries={summaries} />
+//             <DividendChart summaries={summaries} />
+//           </div>
+
+//           <div className="charts-row">
+//             <PriceChangeChart summaries={summaries} />
+//             <InvestmentTrendChart transactions={transactions} />
+//           </div>
+//         </>
+//       )}
+//     </div>
+//   );
+// }
+
+// import React, { useEffect, useState } from "react";
+// import SummaryCharts from "../charts/SummaryCharts";
+// import IndustryChart from "../charts/IndustryChart";
+// import GainLossChart from "../charts/GainLossChart";
+// import DividendChart from "../charts/DividendChart";
+// import PriceChangeChart from "../charts/PriceChangeChart";
+// import InvestmentTrendChart from "../charts/InvestmentTrendChart";
+// import { usePortfolio } from "../context/PortfolioContext";
+// import { useSummary } from "../context/SummaryContext";
+// import "../styles/dashboard.css";
+
+// export default function Dashboard() {
+//   const { activePortfolio } = usePortfolio();
+//   const { summaries } = useSummary(); // ✅ use live summaries from context
+//   const [transactions, setTransactions] = useState([]);
+//   const [loading, setLoading] = useState(false);
+
+//   // === Load transactions from file ===
+//   const fetchTransactions = async (portfolioKey, showLoader = true) => {
+//     try {
+//       if (showLoader) setLoading(true);
+//       const data = await window.electronAPI.readTransactions(portfolioKey);
+//       setTransactions(data || []);
+//     } catch (err) {
+//       console.error("❌ Error reading transactions:", err);
+//       setTransactions([]);
+//     } finally {
+//       if (showLoader) setLoading(false);
+//     }
+//   };
+
+//   // === Load transactions whenever portfolio changes ===
+//   useEffect(() => {
+//     if (activePortfolio) {
+//       console.log(`📊 Loading dashboard for ${activePortfolio}`);
+//       fetchTransactions(activePortfolio);
+//     }
+//   }, [activePortfolio]);
+
+//   // === Auto-refresh when transactions are updated ===
+//   useEffect(() => {
+//     const handleTransactionsUpdated = (_e, payload) => {
+//       if (payload?.portfolio === activePortfolio) {
+//         console.log(`📢 Transactions updated — refreshing charts`);
+//         fetchTransactions(activePortfolio, false);
+//       }
+//     };
+
+//     window.electronAPI?.onTransactionsUpdated?.(handleTransactionsUpdated);
+//     return () => {
+//       window.electronAPI?.removeTransactionsUpdated?.(handleTransactionsUpdated);
+//     };
+//   }, [activePortfolio]);
+
+//   // === Get current summary data from context ===
+//   const currentSummary =
+//     summaries[activePortfolio] && summaries[activePortfolio].length > 0
+//       ? summaries[activePortfolio]
+//       : [];
+
+//   return (
+//     <div className="dashboard-page">
+//       <h2 className="dashboard-title">
+//         Dashboard —{" "}
+//         {activePortfolio === "portfolio1" ? "Portfolio 1" : "Portfolio 2"}
+//       </h2>
+
+//       {loading ? (
+//         <div className="dashboard-status">
+//           Loading {activePortfolio} data…
+//         </div>
+//       ) : (
+//         <>
+//           <div className="charts-row">
+//             <SummaryCharts summaries={currentSummary} />
+//             <IndustryChart summaries={currentSummary} />
+//           </div>
+
+//           <div className="charts-row">
+//             <GainLossChart summaries={currentSummary} />
+//             <DividendChart summaries={currentSummary} />
+//           </div>
+
+//           <div className="charts-row">
+//             <PriceChangeChart summaries={currentSummary} />
+//             <InvestmentTrendChart transactions={transactions} />
+//           </div>
+//         </>
+//       )}
+//     </div>
+//   );
+// }
+
 import React, { useEffect, useState } from "react";
 import SummaryCharts from "../charts/SummaryCharts";
 import IndustryChart from "../charts/IndustryChart";
@@ -683,43 +1120,89 @@ import GainLossChart from "../charts/GainLossChart";
 import DividendChart from "../charts/DividendChart";
 import PriceChangeChart from "../charts/PriceChangeChart";
 import InvestmentTrendChart from "../charts/InvestmentTrendChart";
+import { usePortfolio } from "../context/PortfolioContext";
+import { useSummary } from "../context/SummaryContext";
 import "../styles/dashboard.css";
 
 export default function Dashboard() {
-  const [summaries, setSummaries] = useState([]);
-  const [transactions, setTransactions] = useState([]);
+  const { activePortfolio } = usePortfolio();
+  const { summaries, fetchTransactions, isSaving, saveMessage } = useSummary();
 
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  // === 🔹 Load summaries and transactions when portfolio changes ===
   useEffect(() => {
-    const fetchData = async () => {
-      const summaryData = await window.electronAPI.readSummaries();
-      const transactionData = await window.electronAPI.readTransactions();
-      setSummaries(summaryData);
-      setTransactions(transactionData);
+    const loadData = async () => {
+      setLoading(true);
+
+      // fetchTransactions() from context will update summaries automatically
+      await fetchTransactions(activePortfolio);
+
+      // load transactions separately for charts like InvestmentTrendChart
+      const txns = await window.electronAPI.readTransactions(activePortfolio);
+      setTransactions(txns || []);
+
+      setLoading(false);
     };
-    fetchData();
-  }, []);
+
+    if (activePortfolio) loadData();
+  }, [activePortfolio]);
+
+  // === 🔹 Reactively update on transaction changes ===
+  useEffect(() => {
+    const handleTransactionsUpdated = async (_e, payload) => {
+      if (payload?.portfolio === activePortfolio) {
+        console.log(`🔁 Transaction update detected, refreshing dashboard`);
+        await fetchTransactions(activePortfolio);
+        const txns = await window.electronAPI.readTransactions(activePortfolio);
+        setTransactions(txns || []);
+      }
+    };
+
+    window.electronAPI?.onTransactionsUpdated?.(handleTransactionsUpdated);
+    return () => {
+      window.electronAPI?.removeTransactionsUpdated?.(handleTransactionsUpdated);
+    };
+  }, [activePortfolio, fetchTransactions]);
+
+  const summaryData = summaries[activePortfolio] || [];
 
   return (
     <div className="dashboard-page">
-      <h2 className="dashboard-title">Dashboard</h2>
+      <h2 className="dashboard-title">
+        Dashboard —{" "}
+        {activePortfolio === "portfolio1" ? "Portfolio 1" : "Portfolio 2"}
+      </h2>
 
-      {/* Top Row */}
-      <div className="charts-row">
-        <SummaryCharts summaries={summaries} />
-        <IndustryChart summaries={summaries} />
-      </div>
+      {(loading || isSaving) ? (
+        <div className="dashboard-status">
+          {loading
+            ? `Loading ${activePortfolio} data…`
+            : saveMessage || "Saving..."}
+        </div>
+      ) : summaryData.length === 0 ? (
+        <div className="dashboard-status">
+          No data available for {activePortfolio}
+        </div>
+      ) : (
+        <>
+          <div className="charts-row">
+            <SummaryCharts summaries={summaryData} />
+            <IndustryChart summaries={summaryData} />
+          </div>
 
-      {/* Middle Row */}
-      <div className="charts-row">
-        <GainLossChart summaries={summaries} />
-        <DividendChart summaries={summaries} />
-      </div>
+          <div className="charts-row">
+            <GainLossChart summaries={summaryData} />
+            <DividendChart summaries={summaryData} />
+          </div>
 
-      {/* Bottom Row */}
-      <div className="charts-row">
-        <PriceChangeChart summaries={summaries} />
-        <InvestmentTrendChart transactions={transactions} />
-      </div>
+          <div className="charts-row">
+            <PriceChangeChart summaries={summaryData} />
+            <InvestmentTrendChart transactions={transactions} />
+          </div>
+        </>
+      )}
     </div>
   );
 }
