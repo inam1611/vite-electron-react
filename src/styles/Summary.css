@@ -1,28 +1,34 @@
-.summary-title {
-  font-size: 2.8rem;
-  font-weight: bold;
-  margin: 0;
-  text-align: center;
-  margin-top: 100px; /* ✅ moves it slightly down */
-  margin-bottom: 100px; /* ✅ moves it slightly down */
+/* ===========================
+   🌟 Summary Page Styles
+   =========================== */
 
+.summary-page {
+  padding: 20px 40px;
+  margin-top: 80px; /* ✅ Space below navbar */
 }
+
+/* ===== Title + Header ===== */
+.summary-title {
+  font-size: 2.4rem;
+  font-weight: 700;
+  text-align: center;
+  margin: 80px 0 40px;
+  color: var(--text-primary, #222);
+}
+
+/* ===== Refresh Button ===== */
 .refresh-button {
   position: absolute;
-  top: 170px;
+  top: 130px;
   right: 20px;
-
-  /* keep your existing styles */
   background: transparent;
   border: none;
   cursor: pointer;
   padding: 0.5rem;
-  transition: all 0.25s ease-in-out;
-
-  /* ✅ center the svg */
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.25s ease-in-out;
 }
 
 .refresh-button:hover:not(:disabled) {
@@ -36,7 +42,6 @@
 .refresh-button:disabled {
   cursor: not-allowed;
   opacity: 0.5;
-  box-shadow: none;
 }
 
 body.light .refresh-button svg {
@@ -57,21 +62,7 @@ body.dark .refresh-button:hover:not(:disabled) svg {
   transform: scale(1.15);
 }
 
-.spin {
-  animation: spin 1s linear infinite;
-  border-radius: 50%;
-  transform-origin: center;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-} 
-
+/* ===== Loading / Saving Popup ===== */
 .summary-status {
   position: fixed;
   top: 50%;
@@ -88,11 +79,9 @@ body.dark .refresh-button:hover:not(:disabled) svg {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(8px);
   letter-spacing: 0.5px;
-
   animation: fadeSlideInOut 4.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ✨ Smooth fade + slide animation */
 @keyframes fadeSlideInOut {
   0% {
     opacity: 0;
@@ -112,7 +101,6 @@ body.dark .refresh-button:hover:not(:disabled) svg {
   }
 }
 
-/* Optional: subtle pulse while visible */
 .summary-status::after {
   content: "";
   display: inline-block;
@@ -136,7 +124,75 @@ body.dark .refresh-button:hover:not(:disabled) svg {
   }
 }
 
+/* ===== Stat Boxes ===== */
+.summary-stats-grid.merged {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
 
+.summary-box {
+  background: var(--card-bg, #f8f9fa);
+  border-radius: 16px;
+  padding: 18px 20px;
+  text-align: left;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.summary-box:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+}
+
+.summary-box.wide-box {
+  grid-column: span 1;
+}
+
+.summary-box h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: var(--text-secondary, #555);
+}
+
+.summary-pair {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 6px 0;
+  font-size: 0.95rem;
+  color: var(--text-primary, #222);
+}
+
+.summary-pair strong {
+  font-weight: 600;
+}
+
+/* ===== Dividend Box Styling ===== */
+.summary-box:last-child {
+  text-align: center;
+  background: var(--accent-bg, #e9f9f1);
+  color: #006b4f;
+  font-weight: 600;
+}
+
+/* ===== Light / Dark Mode ===== */
+body.dark .summary-box {
+  background: #1e1e1e;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+  color: #e5e5e5;
+}
+
+body.dark .summary-box h3 {
+  color: #bcbcbc;
+}
+
+body.dark .summary-box:last-child {
+  background: #163b33;
+  color: #00ff99;
+}
 
 
 

@@ -688,7 +688,50 @@
 
 // export default Summary;
 
-import React, { useEffect, useState } from "react";
+// import React, { useEffect, useState } from "react";
+// import SummaryTable from "../tables/SummaryTable";
+// import { useSummary } from "../context/SummaryContext";
+// import { usePortfolio } from "../context/PortfolioContext";
+// import "../styles/Summary.css";
+
+// function Summary() {
+//   const { activePortfolio } = usePortfolio();
+//   const { summaries, fetchTransactions, isSaving, saveMessage } = useSummary();
+//   const [isLoading, setIsLoading] = useState(false);
+
+//   // Load summaries when portfolio changes
+//   useEffect(() => {
+//     const loadData = async () => {
+//       setIsLoading(true);
+//       try {
+//         await fetchTransactions(activePortfolio); // context updates summaries automatically
+//       } finally {
+//         setIsLoading(false);
+//       }
+//     };
+
+//     if (activePortfolio) loadData();
+//   }, [activePortfolio, fetchTransactions]);
+
+//   const summaryData = summaries[activePortfolio] || [];
+
+//   return (
+//     <div className="summary-page">
+//       <div className="summary-header">
+//         <h1 className="summary-title">
+//           📊 Summary – {activePortfolio === "portfolio1" ? "K Trade Portfolio" : "JS Global Portfolio"}
+//         </h1>
+//       </div>
+
+//       <SummaryTable summaries={summaryData} />
+//     </div>
+//   );
+// }
+
+// export default Summary;
+
+
+import React, { useEffect, useState, useMemo } from "react";
 import SummaryTable from "../tables/SummaryTable";
 import { useSummary } from "../context/SummaryContext";
 import { usePortfolio } from "../context/PortfolioContext";
@@ -699,30 +742,145 @@ function Summary() {
   const { summaries, fetchTransactions, isSaving, saveMessage } = useSummary();
   const [isLoading, setIsLoading] = useState(false);
 
-  // Load summaries when portfolio changes
+  // Fetch summary data whenever portfolio changes
   useEffect(() => {
-    const loadData = async () => {
+    const loadPortfolioSummary = async () => {
       setIsLoading(true);
       try {
-        await fetchTransactions(activePortfolio); // context updates summaries automatically
+        await fetchTransactions(activePortfolio);
       } finally {
         setIsLoading(false);
       }
     };
 
-    if (activePortfolio) loadData();
+    if (activePortfolio) loadPortfolioSummary();
   }, [activePortfolio, fetchTransactions]);
 
   const summaryData = summaries[activePortfolio] || [];
+
+  // 🔹 Compute portfolio-level statistics
+  const portfolioStats = useMemo(() => {
+    if (!summaryData || summaryData.length === 0) {
+      return {
+        totalInvestment: 0,
+        totalValue: 0,
+        totalProfitLoss: 0,
+        totalDividend: 0,
+        overallYield: 0,
+      };
+    }
+
+    let totalInvestment = 0;
+    let totalValue = 0;
+    let totalDividend = 0;
+
+    summaryData.forEach((item) => {
+      const cost = Number(item.cumulativeCost) || 0;
+      const shares = Number(item.shares) || 0;
+      const lastPrice = Number(item.lastPrice) || 0;
+      const div = Number(item.dividendIncome) || 0;
+
+      totalInvestment += cost;
+      totalValue += shares * lastPrice;
+      totalDividend += div;
+    });
+
+    const totalProfitLoss = totalValue - totalInvestment;
+    const overallYield =
+      totalInvestment > 0
+        ? ((totalProfitLoss / totalInvestment) * 100).toFixed(2)
+        : 0;
+
+    return {
+      totalInvestment,
+      totalValue,
+      totalProfitLoss,
+      totalDividend,
+      overallYield,
+    };
+  }, [summaryData]);
 
   return (
     <div className="summary-page">
       <div className="summary-header">
         <h1 className="summary-title">
-          📊 Summary – {activePortfolio === "portfolio1" ? "K Trade Portfolio" : "JS Global Portfolio"}
+          📊 Summary –{" "}
+          {activePortfolio === "portfolio1"
+            ? "K Trade Portfolio"
+            : "JS Global Portfolio"}
         </h1>
       </div>
 
+      {/* 🔹 Portfolio Stats Overview Boxes */}
+      <div className="summary-stats-grid merged">
+        {/* Box 1: Investment vs Current Value */}
+        <div className="summary-box wide-box">
+          <h3>Portfolio Value</h3>
+          <div className="summary-pair">
+            <span>Total Invested:</span>
+            <strong>
+              Rs.{" "}
+              {portfolioStats.totalInvestment.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </strong>
+          </div>
+          <div className="summary-pair">
+            <span>Current Value:</span>
+            <strong>
+              Rs.{" "}
+              {portfolioStats.totalValue.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </strong>
+          </div>
+        </div>
+
+        {/* Box 2: Gain/Loss + Return on Yield */}
+        <div
+          className="summary-box wide-box"
+          style={{
+            color:
+              portfolioStats.totalProfitLoss > 0
+                ? "green"
+                : portfolioStats.totalProfitLoss < 0
+                ? "red"
+                : "gray",
+          }}
+        >
+          <h3>Performance</h3>
+          <div className="summary-pair">
+            <span>Total Gain/Loss:</span>
+            <strong>
+              Rs.{" "}
+              {portfolioStats.totalProfitLoss.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </strong>
+          </div>
+          <div className="summary-pair">
+            <span>Return on Yield:</span>
+            <strong>{portfolioStats.overallYield}%</strong>
+          </div>
+        </div>
+
+        {/* Box 3: Dividend */}
+        <div className="summary-box">
+          <h3>Dividend Income</h3>
+          <p>
+            Rs.{" "}
+            {portfolioStats.totalDividend.toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+          </p>
+        </div>
+      </div>
+
+      {/* 🔹 Detailed Summary Table */}
       <SummaryTable summaries={summaryData} />
     </div>
   );

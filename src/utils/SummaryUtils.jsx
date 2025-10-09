@@ -398,6 +398,181 @@
 //   return <span style={{ color }}>Rs. {profit.toFixed(2)}</span>;
 // };
 
+// import React from "react";
+
+// /**
+//  * Extract clean company name and XD/XB flag from API name field
+//  */
+// export const extractNameAndXD = (rawName = "") => {
+//   if (!rawName) return { name: "", xdxb: "" };
+
+//   const match = rawName.match(/(.*?)(XD|XB)$/i);
+//   if (match) {
+//     return {
+//       name: match[1].trim(),
+//       xdxb: match[2].toUpperCase(),
+//     };
+//   }
+
+//   return { name: rawName.trim(), xdxb: "" };
+// };
+
+// /**
+//  * Render "Last Price" cell with color + arrow
+//  */
+// export const renderLastPrice = (item) => {
+//   const priceNum = Number(String(item.lastPrice || 0).replace(/,/g, ""));
+//   const changeValNum = Number(String(item.changeValue || 0).replace(/,/g, ""));
+//   const changePercent = item.changePercent || "";
+
+//   const price = !isNaN(priceNum)
+//     ? priceNum.toLocaleString(undefined, {
+//         minimumFractionDigits: 2,
+//         maximumFractionDigits: 2,
+//       })
+//     : "-";
+
+//   const changeValue = !isNaN(changeValNum)
+//     ? changeValNum.toLocaleString(undefined, {
+//         minimumFractionDigits: 2,
+//         maximumFractionDigits: 2,
+//       })
+//     : "0.00";
+
+//   let color = "inherit";
+//   let arrow = "";
+//   if (changeValNum > 0) {
+//     color = "green";
+//     arrow = "▲";
+//   } else if (changeValNum < 0) {
+//     color = "red";
+//     arrow = "▼";
+//   }
+
+//   return (
+//     <div style={{ color, textAlign: "center", lineHeight: "1.4" }}>
+//       <div>Rs. {price}</div>
+//       <div>{arrow}</div>
+//       <div>
+//         {changeValue} {changePercent}
+//       </div>
+//     </div>
+//   );
+// };
+
+// /**
+//  * Calculate portfolio stats for a group of transactions
+//  */
+// export const calculatePortfolio = (symbol, transactions) => {
+//   let cumulativeUnits = 0;
+//   let cumulativeCost = 0;
+
+//   transactions.forEach((txn) => {
+//     const type = txn.Type || txn.type || "";
+//     const units = Number(String(txn["Number of Units"] || txn.units || 0).replace(/,/g, ""));
+//     const pricePerShare = Number(
+//       String(txn["Price per Share"] || txn.pricePerShare || 0).replace(/,/g, "")
+//     );
+
+//     // --- Fees calculation ---
+//     let fees = 0;
+//     if (type === "Buy" || type === "Sell") {
+//       let commission = pricePerShare < 20 ? units * 0.03 : units * pricePerShare * 0.0015;
+//       const salesTax = commission * 0.15;
+//       const cdcCharges = units * 0.005;
+//       fees = commission + salesTax + cdcCharges;
+//     } else if (type === "Dividend") {
+//       fees = units * pricePerShare * 0.15;
+//     }
+
+//     // --- Book cost logic ---
+//     if (type === "Buy") {
+//       const bookCost = units * pricePerShare + fees;
+//       cumulativeUnits += units;
+//       cumulativeCost += bookCost;
+//     } else if (type === "Sell") {
+//       const avgCostPerUnit = cumulativeUnits > 0 ? cumulativeCost / cumulativeUnits : 0;
+//       cumulativeUnits -= units;
+//       cumulativeCost -= avgCostPerUnit * units;
+//     }
+//     // Dividends don't affect units or cost
+//   });
+
+//   const avgCost = cumulativeUnits > 0 ? cumulativeCost / cumulativeUnits : 0;
+
+//   return { cumulativeUnits, cumulativeCost, avgCost };
+// };
+
+// /**
+//  * Calculate Yield on Cost (%)
+//  */
+// export const calculateYieldOnCost = (lastPrice, avgCost) => {
+//   const lp = Number(String(lastPrice || 0).replace(/,/g, ""));
+//   const ac = Number(String(avgCost || 0).replace(/,/g, ""));
+//   if (!lp || !ac || ac === 0 || isNaN(lp) || isNaN(ac)) return null;
+//   return ((lp - ac) / ac) * 100;
+// };
+
+// /**
+//  * Calculate Unrealized Profit/Loss
+//  */
+// export const calculateProfitLoss = (lastPrice, avgCost, shares) => {
+//   const lp = Number(String(lastPrice || 0).replace(/,/g, ""));
+//   const ac = Number(String(avgCost || 0).replace(/,/g, ""));
+//   const sh = Number(String(shares || 0).replace(/,/g, ""));
+//   if (!lp || !ac || !sh || isNaN(lp) || isNaN(ac) || isNaN(sh)) return 0;
+//   return (lp - ac) * sh;
+// };
+
+// /**
+//  * Render Unrealized Profit/Loss with color formatting
+//  */
+// export const renderProfitLoss = (lastPrice, avgCost, shares) => {
+//   const profit = calculateProfitLoss(lastPrice, avgCost, shares);
+//   let color = "gray";
+//   if (profit > 0) color = "green";
+//   else if (profit < 0) color = "red";
+
+//   return (
+//     <span style={{ color }}>
+//       Rs. {profit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+//     </span>
+//   );
+// };
+
+// /**
+//  * Render Realized Profit/Loss with color formatting
+//  */
+// export const renderRealizedPnL = (realizedPnL) => {
+//   const pnl = Number(String(realizedPnL || 0).replace(/,/g, ""));
+//   let color = "gray";
+//   if (pnl > 0) color = "green";
+//   else if (pnl < 0) color = "red";
+
+//   return (
+//     <span style={{ color }}>
+//       Rs. {pnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+//     </span>
+//   );
+// };
+
+// /**
+//  * Render Dividend Income with color formatting
+//  */
+// export const renderDividendIncome = (dividend) => {
+//   const div = Number(String(dividend || 0).replace(/,/g, ""));
+//   let color = "gray";
+//   if (div > 0) color = "green";
+//   else if (div < 0) color = "red";
+
+//   return (
+//     <span style={{ color }}>
+//       Rs. {div.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+//     </span>
+//   );
+// };
+
+
 import React from "react";
 
 /**
@@ -426,17 +601,11 @@ export const renderLastPrice = (item) => {
   const changePercent = item.changePercent || "";
 
   const price = !isNaN(priceNum)
-    ? priceNum.toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })
+    ? priceNum.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     : "-";
 
   const changeValue = !isNaN(changeValNum)
-    ? changeValNum.toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })
+    ? changeValNum.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     : "0.00";
 
   let color = "inherit";
@@ -495,11 +664,9 @@ export const calculatePortfolio = (symbol, transactions) => {
       cumulativeUnits -= units;
       cumulativeCost -= avgCostPerUnit * units;
     }
-    // Dividends don't affect units or cost
   });
 
   const avgCost = cumulativeUnits > 0 ? cumulativeCost / cumulativeUnits : 0;
-
   return { cumulativeUnits, cumulativeCost, avgCost };
 };
 
@@ -525,7 +692,7 @@ export const calculateProfitLoss = (lastPrice, avgCost, shares) => {
 };
 
 /**
- * Render Unrealized Profit/Loss with color formatting
+ * Render Unrealized Profit/Loss
  */
 export const renderProfitLoss = (lastPrice, avgCost, shares) => {
   const profit = calculateProfitLoss(lastPrice, avgCost, shares);
@@ -541,13 +708,11 @@ export const renderProfitLoss = (lastPrice, avgCost, shares) => {
 };
 
 /**
- * Render Realized Profit/Loss with color formatting
+ * Render Realized Profit/Loss
  */
 export const renderRealizedPnL = (realizedPnL) => {
   const pnl = Number(String(realizedPnL || 0).replace(/,/g, ""));
-  let color = "gray";
-  if (pnl > 0) color = "green";
-  else if (pnl < 0) color = "red";
+  let color = pnl > 0 ? "green" : pnl < 0 ? "red" : "gray";
 
   return (
     <span style={{ color }}>
@@ -557,17 +722,49 @@ export const renderRealizedPnL = (realizedPnL) => {
 };
 
 /**
- * Render Dividend Income with color formatting
+ * Render Dividend Income
  */
 export const renderDividendIncome = (dividend) => {
   const div = Number(String(dividend || 0).replace(/,/g, ""));
-  let color = "gray";
-  if (div > 0) color = "green";
-  else if (div < 0) color = "red";
+  let color = div > 0 ? "green" : div < 0 ? "red" : "gray";
 
   return (
     <span style={{ color }}>
       Rs. {div.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
     </span>
   );
+};
+
+/* =============================== */
+/* 📊 Dashboard Summary Calculations */
+/* =============================== */
+
+/**
+ * Compute high-level totals across summary data
+ */
+export const calculateDashboardTotals = (summaryData = []) => {
+  if (!summaryData.length) return { totalInvested: 0, totalValue: 0, totalProfit: 0, totalReturnPct: 0 };
+
+  const totalInvested = summaryData.reduce((sum, s) => sum + (s.cumulativeCost || 0), 0);
+  const totalValue = summaryData.reduce(
+    (sum, s) => sum + ((s.lastPrice || 0) * (s.shares || 0)),
+    0
+  );
+  const totalProfit = totalValue - totalInvested;
+  const totalReturnPct = totalInvested > 0 ? (totalProfit / totalInvested) * 100 : 0;
+
+  return { totalInvested, totalValue, totalProfit, totalReturnPct };
+};
+
+/**
+ * Placeholder: Compute today's and last 7 days performance
+ * You can extend this once your API provides historical data
+ */
+export const calculatePerformancePlaceholders = () => {
+  return {
+    todayChange: 0,
+    todayReturnPct: 0,
+    last7DaysChange: 0,
+    last7DaysReturnPct: 0,
+  };
 };
